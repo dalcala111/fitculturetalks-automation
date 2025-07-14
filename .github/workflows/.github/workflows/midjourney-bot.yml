@@ -1,0 +1,29 @@
+name: Midjourney Automation
+on:
+  repository_dispatch:
+    types: [generate-image]
+
+jobs:
+  midjourney:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install packages
+        run: |
+          pip install selenium requests
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+      
+      - name: Run Midjourney Bot
+        run: python midjourney_bot.py "${{ github.event.client_payload.prompt }}"
+        env:
+          DISCORD_EMAIL: ${{ secrets.DISCORD_EMAIL }}
+          DISCORD_PASSWORD: ${{ secrets.DISCORD_PASSWORD }}
+          N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}

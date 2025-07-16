@@ -1,215 +1,32 @@
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.action_chains import ActionChains
-import time
-import random
+name: Midjourney Automation
+on:
+  repository_dispatch:
+    types: [generate-image]
 
-def test_discord_automation():
-    print("🥷 Starting ultra-stealth Discord automation...")
-    
-    chrome_options = Options()
-    
-    # Maximum stealth configuration
-    chrome_options.add_argument("--disable-blink-features=AutomationControlled")
-    chrome_options.add_argument("--disable-web-security")
-    chrome_options.add_argument("--disable-features=VizDisplayCompositor")
-    chrome_options.add_argument("--disable-extensions")
-    chrome_options.add_argument("--no-sandbox")
-    chrome_options.add_argument("--disable-dev-shm-usage")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--remote-debugging-port=0")
-    
-    # Realistic user agent
-    chrome_options.add_argument("--user-agent=Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
-    
-    # Remove automation indicators
-    chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
-    chrome_options.add_experimental_option('useAutomationExtension', False)
-    
-    # Add realistic prefs
-    prefs = {
-        "profile.default_content_setting_values.notifications": 2,
-        "profile.default_content_settings.popups": 0,
-        "profile.managed_default_content_settings.images": 2
-    }
-    chrome_options.add_experimental_option("prefs", prefs)
-    
-    try:
-        driver = webdriver.Chrome(options=chrome_options)
-        
-        # Ultra stealth JavaScript injection
-        driver.execute_script("""
-            // Remove webdriver property
-            Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
-            
-            // Mock plugins
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5].map(() => ({name: 'Chrome PDF Plugin'}))
-            });
-            
-            // Mock languages
-            Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
-            
-            // Mock Chrome runtime
-            window.chrome = {
-                runtime: {
-                    onConnect: undefined,
-                    onMessage: undefined
-                }
-            };
-            
-            // Mock permissions
-            const originalQuery = window.navigator.permissions.query;
-            window.navigator.permissions.query = (parameters) => (
-                parameters.name === 'notifications' ?
-                Promise.resolve({ state: Notification.permission }) :
-                originalQuery(parameters)
-            );
-            
-            // Hide automation traces
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
-            delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
-        """)
-        
-        print("🌐 Opening Discord with stealth mode...")
-        driver.get("https://discord.com/login")
-        
-        # Add realistic browsing delay
-        time.sleep(random.uniform(4, 7))
-        
-        input("👆 Please login to Discord manually, then press Enter to continue...")
-        
-        # Random delay after login like a human would
-        time.sleep(random.uniform(3, 6))
-        
-        print("🎨 Navigating to Midjourney...")
-        midjourney_url = "https://discord.com/channels/662267976984297473/1008571045445382216"
-        driver.get(midjourney_url)
-        
-        # Human-like page load wait
-        time.sleep(random.uniform(5, 8))
-        
-        # Add some realistic mouse movement
-        actions = ActionChains(driver)
-        actions.move_by_offset(random.randint(50, 200), random.randint(50, 200)).perform()
-        time.sleep(random.uniform(1, 2))
-        
-        print("💬 Finding message input with human-like behavior...")
-        
-        # Human-like element finding
-        time.sleep(random.uniform(1, 3))
-        message_box = driver.find_element(By.CSS_SELECTOR, '[data-slate-editor="true"]')
-        
-        # Human-like mouse movement to element
-        actions = ActionChains(driver)
-        actions.move_to_element(message_box).perform()
-        time.sleep(random.uniform(0.5, 1.2))
-        
-        # Human-like click
-        actions.click().perform()
-        time.sleep(random.uniform(0.8, 1.5))
-        
-        # Clear with human-like behavior
-        actions.key_down(Keys.COMMAND).send_keys('a').key_up(Keys.COMMAND).perform()
-        time.sleep(random.uniform(0.2, 0.5))
-        actions.send_keys(Keys.DELETE).perform()
-        time.sleep(random.uniform(0.5, 1))
-        
-        print("⌨️ Typing '/' with realistic human timing...")
-        
-        # Type slash with realistic delay
-        actions.send_keys("/").perform()
-        
-        # Human-like pause after typing slash
-        time.sleep(random.uniform(1.8, 2.5))
-        
-        print("🔍 Looking for command dropdown...")
-        
-        # Check if we got the bot warning popup
-        try:
-            popup_elements = driver.find_elements(By.XPATH, "//*[contains(text(), 'Bot room') or contains(text(), 'bot')]")
-            if popup_elements:
-                print("⚠️ Bot detection popup appeared!")
-                # Close popup if it has an X button
-                try:
-                    close_button = driver.find_element(By.CSS_SELECTOR, '[aria-label="Close"]')
-                    close_button.click()
-                    time.sleep(1)
-                except:
-                    # Press Escape to close
-                    actions.send_keys(Keys.ESCAPE).perform()
-                    time.sleep(1)
-        except:
-            pass
-        
-        print("🎯 Typing 'imagine' slowly...")
-        
-        # Type imagine with human-like timing
-        imagine_text = "imagine"
-        for i, char in enumerate(imagine_text):
-            actions.send_keys(char).perform()
-            # Vary typing speed like a human
-            if i == 0:
-                time.sleep(random.uniform(0.15, 0.25))  # Slower first character
-            else:
-                time.sleep(random.uniform(0.08, 0.18))
-        
-        # Wait for autocomplete
-        time.sleep(random.uniform(1.5, 2.5))
-        
-        print("🎯 Selecting /imagine command...")
-        
-        # Try Tab to select command
-        actions.send_keys(Keys.TAB).perform()
-        time.sleep(random.uniform(0.8, 1.3))
-        
-        # Confirm with Enter
-        actions.send_keys(Keys.ENTER).perform()
-        time.sleep(random.uniform(1.2, 2))
-        
-        print("📝 Typing prompt...")
-        
-        # Wait for prompt field to appear
-        time.sleep(random.uniform(1, 2))
-        
-        # Type the prompt with realistic timing
-        prompt = "beautiful anime fitness girl doing morning yoga"
-        for i, char in enumerate(prompt):
-            actions.send_keys(char).perform()
-            # Realistic typing rhythm
-            if char == ' ':
-                time.sleep(random.uniform(0.15, 0.25))  # Longer pause for spaces
-            else:
-                time.sleep(random.uniform(0.04, 0.12))
-        
-        # Human-like pause before sending
-        time.sleep(random.uniform(1, 2))
-        
-        print("🚀 Sending command...")
-        actions.send_keys(Keys.ENTER).perform()
-        
-        print("✅ Command sent with maximum stealth!")
-        time.sleep(10)
-        
-        # Check for success
-        page_source = driver.page_source.lower()
-        if "midjourney bot" in page_source and "%" in page_source:
-            print("🎉 SUCCESS! Midjourney is processing!")
-        elif "failed to process" in page_source:
-            print("❌ Command failed")
-        else:
-            print("⏳ Check Discord for results...")
-        
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        import traceback
-        traceback.print_exc()
-    finally:
-        input("Press Enter to close browser...")
-        driver.quit()
-
-if __name__ == "__main__":
-    test_discord_automation()
+jobs:
+  midjourney:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      
+      - name: Install Chrome and dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser chromium-chromedriver
+          pip install selenium requests
+      
+      - name: Run Midjourney Bot
+        run: python midjourney_bot.py "${{ github.event.client_payload.prompt }}"
+        env:
+          DISCORD_EMAIL: ${{ secrets.DISCORD_EMAIL }}
+          DISCORD_PASSWORD: ${{ secrets.DISCORD_PASSWORD }}
+          N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
+      
+      - name: Debug Output
+        run: echo "Automation completed for prompt - ${{ github.event.client_payload.prompt }}"

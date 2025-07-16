@@ -29,4 +29,4 @@ jobs:
           N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       
       - name: Debug Output
-        run: echo "Automation completed for prompt: ${{ github.event.client_payload.prompt }}"
+        run: echo "Automation completed for prompt - ${{ github.event.client_payload.prompt }}"

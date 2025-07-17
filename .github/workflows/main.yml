@@ -48,6 +48,8 @@ jobs:
       env:
         DISPLAY: :99
         PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
+        DISCORD_EMAIL: ${{ secrets.DISCORD_EMAIL }}
+        DISCORD_PASSWORD: ${{ secrets.DISCORD_PASSWORD }}
       run: |
         # Start virtual display
         Xvfb :99 -screen 0 1920x1080x24 &

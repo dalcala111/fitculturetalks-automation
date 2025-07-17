@@ -31,7 +31,7 @@ def get_chrome_options():
     chrome_options.add_argument("--headless")  # Required for cloud
     chrome_options.add_argument("--window-size=1920,1080")
     
-    # ULTRA STEALTH CONFIGURATION - IDENTICAL to working local version
+    # ULTRA STEALTH CONFIGURATION - MAXIMUM ANTI-DETECTION
     chrome_options.add_argument("--disable-blink-features=AutomationControlled")
     chrome_options.add_argument("--disable-web-security")
     chrome_options.add_argument("--disable-features=VizDisplayCompositor")
@@ -41,53 +41,107 @@ def get_chrome_options():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--remote-debugging-port=0")
     
-    # Realistic user agent - UPDATED to match current Chrome
-    chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
-    
-    # Additional stealth for cloud environments
+    # ADVANCED STEALTH - Anti-fingerprinting
     chrome_options.add_argument("--disable-background-timer-throttling")
     chrome_options.add_argument("--disable-backgrounding-occluded-windows")
     chrome_options.add_argument("--disable-renderer-backgrounding")
     chrome_options.add_argument("--disable-field-trial-config")
     chrome_options.add_argument("--disable-ipc-flooding-protection")
+    chrome_options.add_argument("--disable-hang-monitor")
+    chrome_options.add_argument("--disable-client-side-phishing-detection")
+    chrome_options.add_argument("--disable-component-update")
+    chrome_options.add_argument("--disable-domain-reliability")
+    chrome_options.add_argument("--disable-features=TranslateUI")
+    chrome_options.add_argument("--disable-default-apps")
+    chrome_options.add_argument("--disable-background-networking")
     
-    # Remove automation indicators - CRITICAL for stealth
+    # Ultra realistic user agent for current Chrome version
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
+    
+    # Remove ALL automation indicators - CRITICAL for stealth
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
     chrome_options.add_experimental_option('useAutomationExtension', False)
     
-    # Add realistic prefs - EXACTLY like working version
+    # Ultra realistic browser prefs - mimic real user
     prefs = {
         "profile.default_content_setting_values.notifications": 2,
         "profile.default_content_settings.popups": 0,
-        "profile.managed_default_content_settings.images": 2
+        "profile.managed_default_content_settings.images": 2,
+        "profile.default_content_setting_values.media_stream": 2,
+        "profile.default_content_setting_values.geolocation": 2,
+        "profile.managed_default_content_settings.media_stream": 2,
+        "profile.default_content_setting_values.desktop_notification": 2,
+        "profile.content_settings.exceptions.automatic_downloads.*.setting": 1,
+        "profile.default_content_setting_values.plugins": 1,
+        "profile.content_settings.plugin_whitelist.adobe-flash-player": 1
     }
     chrome_options.add_experimental_option("prefs", prefs)
     
     return chrome_options
 
 def apply_stealth_js(driver):
-    """Inject ULTRA STEALTH JavaScript - IDENTICAL to working local version"""
+    """Inject MAXIMUM STEALTH JavaScript - UNDETECTABLE VERSION"""
     stealth_js = """
-        // Remove webdriver property
+        // Remove ALL webdriver properties
         Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
+        delete navigator.__proto__.webdriver;
         
-        // Mock plugins
+        // Mock realistic plugins array
         Object.defineProperty(navigator, 'plugins', {
-            get: () => [1, 2, 3, 4, 5].map(() => ({name: 'Chrome PDF Plugin'}))
+            get: () => [
+                {name: 'Chrome PDF Plugin', description: 'Portable Document Format', filename: 'internal-pdf-viewer'},
+                {name: 'Chrome PDF Viewer', description: '', filename: 'mhjfbmdgcfjbbpaeojofohoefgiehjai'},
+                {name: 'Native Client', description: '', filename: 'internal-nacl-plugin'}
+            ]
         });
         
-        // Mock languages
+        // Mock realistic languages
         Object.defineProperty(navigator, 'languages', {get: () => ['en-US', 'en']});
+        Object.defineProperty(navigator, 'language', {get: () => 'en-US'});
         
-        // Mock Chrome runtime
+        // Mock Chrome runtime with realistic properties
         window.chrome = {
             runtime: {
                 onConnect: undefined,
-                onMessage: undefined
-            }
+                onMessage: undefined,
+                PlatformOs: {
+                    MAC: 'mac',
+                    WIN: 'win',
+                    ANDROID: 'android',
+                    CROS: 'cros',
+                    LINUX: 'linux',
+                    OPENBSD: 'openbsd'
+                },
+                PlatformArch: {
+                    ARM: 'arm',
+                    X86_32: 'x86-32',
+                    X86_64: 'x86-64'
+                }
+            },
+            loadTimes: () => ({
+                commitLoadTime: 1612345678.9,
+                connectionInfo: 'h2',
+                finishDocumentLoadTime: 1612345679.1,
+                finishLoadTime: 1612345679.2,
+                firstPaintAfterLoadTime: 1612345679.3,
+                firstPaintTime: 1612345679.05,
+                navigationType: 'Other',
+                npnNegotiatedProtocol: 'h2',
+                requestTime: 1612345678.5,
+                startLoadTime: 1612345678.7,
+                wasAlternateProtocolAvailable: false,
+                wasFetchedViaSpdy: true,
+                wasNpnNegotiated: true
+            }),
+            csi: () => ({
+                startE: 1612345678900,
+                onloadT: 1612345679200,
+                pageT: 1612345679300,
+                tran: 15
+            })
         };
         
-        // Mock permissions
+        // Mock permissions with realistic responses
         const originalQuery = window.navigator.permissions.query;
         window.navigator.permissions.query = (parameters) => (
             parameters.name === 'notifications' ?
@@ -95,15 +149,46 @@ def apply_stealth_js(driver):
             originalQuery(parameters)
         );
         
-        // Hide automation traces - CRITICAL
+        // Mock realistic screen properties
+        Object.defineProperty(screen, 'availTop', {get: () => 0});
+        Object.defineProperty(screen, 'availLeft', {get: () => 0});
+        Object.defineProperty(screen, 'availHeight', {get: () => 1080});
+        Object.defineProperty(screen, 'availWidth', {get: () => 1920});
+        Object.defineProperty(screen, 'colorDepth', {get: () => 24});
+        Object.defineProperty(screen, 'pixelDepth', {get: () => 24});
+        
+        // Hide ALL automation traces
         delete window.cdc_adoQpoasnfa76pfcZLmcfl_Array;
         delete window.cdc_adoQpoasnfa76pfcZLmcfl_Promise;
         delete window.cdc_adoQpoasnfa76pfcZLmcfl_Symbol;
+        delete window.cdc_adoQpoasnfa76pfcZLmcfl_JSON;
+        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Object;
+        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Proxy;
+        delete window.cdc_adoQpoasnfa76pfcZLmcfl_Reflect;
+        
+        // Override toString functions to hide traces
+        const toStringHandler = {
+            apply: function(target, thisArg, argumentsList) {
+                if (thisArg && thisArg.toString && thisArg.toString.toString().indexOf('[native code]') === -1) {
+                    return 'function () { [native code] }';
+                }
+                return target.apply(thisArg, argumentsList);
+            }
+        };
+        
+        Function.prototype.toString = new Proxy(Function.prototype.toString, toStringHandler);
+        
+        // Mock realistic timing APIs
+        window.performance.now = () => Math.random() * 1000000;
+        
+        // Add realistic viewport
+        Object.defineProperty(document.documentElement, 'clientHeight', {get: () => 1080});
+        Object.defineProperty(document.documentElement, 'clientWidth', {get: () => 1920});
     """
     
     try:
         driver.execute_script(stealth_js)
-        logger.info("✅ ULTRA STEALTH JavaScript injected successfully")
+        logger.info("✅ MAXIMUM STEALTH JavaScript injected successfully")
     except Exception as e:
         logger.warning(f"⚠️ Could not inject stealth JS: {e}")
 
@@ -195,7 +280,26 @@ def run_midjourney_automation():
                 actions.click().perform()
                 
                 logger.info("✅ Login submitted, waiting for authentication...")
-                time.sleep(random.uniform(5, 8))
+                
+                # ULTRA STEALTH LOGIN WAIT - vary timing like a real user
+                wait_time = random.uniform(8, 15)
+                logger.info(f"⏳ Waiting {wait_time:.1f} seconds for Discord...")
+                time.sleep(wait_time)
+                
+                # Try going to Discord main page first to complete login flow
+                logger.info("🏠 Navigating to Discord main page...")
+                driver.get("https://discord.com/channels/@me")
+                time.sleep(random.uniform(4, 7))
+                
+                # Add some realistic user behavior - check notifications, etc.
+                current_url = driver.current_url
+                logger.info(f"📍 Current location: {current_url}")
+                
+                # If still having issues, try refreshing like a real user might
+                if "login" in current_url:
+                    logger.info("🔄 Refreshing page like a real user...")
+                    driver.refresh()
+                    time.sleep(random.uniform(3, 6))
                 
             except Exception as e:
                 logger.error(f"❌ Login failed: {e}")

@@ -12,6 +12,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from webdriver_manager.chrome import ChromeDriverManager
 import time
 import random
 import os
@@ -130,8 +131,8 @@ def run_midjourney_automation():
         # Set up Chrome with cloud-optimized options
         chrome_options = get_chrome_options()
         
-        # For GitHub Actions, ChromeDriver should be in PATH
-        service = Service() if os.getenv('GITHUB_ACTIONS') else Service('/usr/local/bin/chromedriver')
+        # Use webdriver-manager to automatically handle ChromeDriver
+        service = Service(ChromeDriverManager().install())
         
         driver = webdriver.Chrome(service=service, options=chrome_options)
         logger.info("🌐 Chrome driver initialized with ULTRA STEALTH")

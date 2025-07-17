@@ -242,67 +242,139 @@ def run_midjourney_automation():
         # Initialize WebDriverWait
         wait = WebDriverWait(driver, 20)
         
-        # Automated login with ultra stealth
+        # Automated login with MAXIMUM stealth
         discord_email = os.getenv('DISCORD_EMAIL')
         discord_password = os.getenv('DISCORD_PASSWORD')
         
         if discord_email and discord_password:
-            logger.info("🔐 Performing automated login with stealth...")
+            logger.info("🔐 Performing ULTIMATE STEALTH login...")
             
-            # Find and fill email field
+            # PHASE 1: Ultra-slow, human-like page interaction
             try:
-                email_field = wait.until(EC.presence_of_element_located((By.NAME, "email")))
+                # Simulate real user - move mouse around first
                 actions = ActionChains(driver)
+                
+                # Random mouse movements like a real user exploring the page
+                for _ in range(3):
+                    x = random.randint(100, 800)
+                    y = random.randint(100, 600)
+                    actions.move_by_offset(x, y).perform()
+                    time.sleep(random.uniform(0.5, 1.5))
+                
+                # Wait and look around like a human
+                time.sleep(random.uniform(2, 4))
+                
+                # Find email field with multiple attempts (human-like behavior)
+                email_field = None
+                for attempt in range(3):
+                    try:
+                        email_field = wait.until(EC.element_to_be_clickable((By.NAME, "email")))
+                        break
+                    except:
+                        logger.info(f"🔍 Searching for login fields... attempt {attempt + 1}")
+                        time.sleep(random.uniform(1, 2))
+                        actions.move_by_offset(random.randint(-50, 50), random.randint(-50, 50)).perform()
+                
+                if not email_field:
+                    logger.error("❌ Could not find email field")
+                    return False
+                
+                # ULTRA HUMAN-LIKE EMAIL ENTRY
                 actions.move_to_element(email_field).perform()
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(1, 2))
+                
+                # Click with slight offset like a human
+                offset_x = random.randint(-5, 5)
+                offset_y = random.randint(-2, 2)
+                actions.move_to_element_with_offset(email_field, offset_x, offset_y).perform()
+                time.sleep(random.uniform(0.3, 0.8))
                 actions.click().perform()
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(0.5, 1.2))
                 
-                # Type email with human-like timing
-                human_type(actions, discord_email, 0.1)
-                time.sleep(random.uniform(0.5, 1))
+                # Clear field like human (select all + delete)
+                actions.key_down(Keys.CONTROL).send_keys('a').key_up(Keys.CONTROL).perform()
+                time.sleep(random.uniform(0.1, 0.3))
+                actions.send_keys(Keys.DELETE).perform()
+                time.sleep(random.uniform(0.2, 0.5))
                 
-                # Find and fill password field
+                # Type email with ULTRA realistic timing
+                logger.info("⌨️ Typing email with human rhythm...")
+                for i, char in enumerate(discord_email):
+                    actions.send_keys(char).perform()
+                    if char == '@':
+                        time.sleep(random.uniform(0.2, 0.4))  # Pause at @
+                    elif char == '.':
+                        time.sleep(random.uniform(0.1, 0.3))  # Pause at .
+                    elif i == 0:
+                        time.sleep(random.uniform(0.3, 0.6))  # Slow start
+                    else:
+                        # Realistic typing rhythm with occasional hesitation
+                        delay = random.uniform(0.05, 0.15)
+                        if random.random() < 0.1:  # 10% chance of hesitation
+                            delay += random.uniform(0.2, 0.5)
+                        time.sleep(delay)
+                
+                # Pause like human before moving to password
+                time.sleep(random.uniform(0.8, 1.5))
+                
+                # ULTRA HUMAN-LIKE PASSWORD ENTRY
                 password_field = driver.find_element(By.NAME, "password")
                 actions.move_to_element(password_field).perform()
                 time.sleep(random.uniform(0.5, 1))
+                
+                # Click password field with slight offset
+                offset_x = random.randint(-3, 3)
+                offset_y = random.randint(-2, 2)
+                actions.move_to_element_with_offset(password_field, offset_x, offset_y).perform()
+                time.sleep(random.uniform(0.3, 0.7))
                 actions.click().perform()
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(0.4, 0.9))
                 
-                # Type password with human-like timing
-                human_type(actions, discord_password, 0.1)
-                time.sleep(random.uniform(1, 2))
+                # Type password with realistic hesitation (like remembering)
+                logger.info("🔐 Typing password with human hesitation...")
+                for i, char in enumerate(discord_password):
+                    actions.send_keys(char).perform()
+                    if i == 0:
+                        time.sleep(random.uniform(0.4, 0.8))  # Think about first char
+                    elif i < 3:
+                        time.sleep(random.uniform(0.15, 0.25))  # Careful start
+                    else:
+                        # Normal typing with occasional pauses
+                        delay = random.uniform(0.06, 0.12)
+                        if random.random() < 0.05:  # 5% chance of thinking pause
+                            delay += random.uniform(0.3, 0.7)
+                        time.sleep(delay)
                 
-                # Click login button
+                # Human pause before clicking login (double-checking)
+                time.sleep(random.uniform(1.2, 2.5))
+                
+                # Find and click login button with human behavior
                 login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
                 actions.move_to_element(login_button).perform()
-                time.sleep(random.uniform(0.5, 1))
+                time.sleep(random.uniform(0.8, 1.3))
+                
+                # Slight mouse movement like aiming
+                actions.move_by_offset(random.randint(-2, 2), random.randint(-1, 1)).perform()
+                time.sleep(random.uniform(0.2, 0.5))
                 actions.click().perform()
                 
-                logger.info("✅ Login submitted, waiting for authentication...")
+                logger.info("✅ Login submitted with MAXIMUM human behavior")
                 
-                # ULTRA STEALTH LOGIN WAIT - vary timing like a real user
-                wait_time = random.uniform(8, 15)
-                logger.info(f"⏳ Waiting {wait_time:.1f} seconds for Discord...")
-                time.sleep(wait_time)
+                # ULTRA REALISTIC POST-LOGIN WAIT
+                # Simulate human waiting and checking
+                wait_intervals = [3, 2, 4, 3, 2]  # Varied waiting like human
+                for i, interval in enumerate(wait_intervals):
+                    time.sleep(interval + random.uniform(-0.5, 0.5))
+                    
+                    # Small mouse movements like human checking page
+                    if i < len(wait_intervals) - 1:
+                        actions.move_by_offset(random.randint(-30, 30), random.randint(-20, 20)).perform()
+                        time.sleep(random.uniform(0.2, 0.8))
                 
-                # Try going to Discord main page first to complete login flow
-                logger.info("🏠 Navigating to Discord main page...")
-                driver.get("https://discord.com/channels/@me")
-                time.sleep(random.uniform(4, 7))
-                
-                # Add some realistic user behavior - check notifications, etc.
-                current_url = driver.current_url
-                logger.info(f"📍 Current location: {current_url}")
-                
-                # If still having issues, try refreshing like a real user might
-                if "login" in current_url:
-                    logger.info("🔄 Refreshing page like a real user...")
-                    driver.refresh()
-                    time.sleep(random.uniform(3, 6))
+                logger.info("⏳ Completed ultra-realistic login sequence")
                 
             except Exception as e:
-                logger.error(f"❌ Login failed: {e}")
+                logger.error(f"❌ Ultra stealth login failed: {e}")
                 return False
         else:
             logger.error("❌ Discord credentials not found in environment variables")

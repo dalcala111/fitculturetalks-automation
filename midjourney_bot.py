@@ -41,8 +41,15 @@ def get_chrome_options():
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--remote-debugging-port=0")
     
-    # Realistic user agent - keeping Linux version for cloud
-    chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+    # Realistic user agent - UPDATED to match current Chrome
+    chrome_options.add_argument("--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36")
+    
+    # Additional stealth for cloud environments
+    chrome_options.add_argument("--disable-background-timer-throttling")
+    chrome_options.add_argument("--disable-backgrounding-occluded-windows")
+    chrome_options.add_argument("--disable-renderer-backgrounding")
+    chrome_options.add_argument("--disable-field-trial-config")
+    chrome_options.add_argument("--disable-ipc-flooding-protection")
     
     # Remove automation indicators - CRITICAL for stealth
     chrome_options.add_experimental_option("excludeSwitches", ["enable-automation", "enable-logging"])
@@ -189,6 +196,18 @@ def run_midjourney_automation():
                 
                 logger.info("✅ Login submitted, waiting for authentication...")
                 time.sleep(random.uniform(5, 8))
+                
+                # Check for 2FA or verification
+                current_url = driver.current_url
+                page_source = driver.page_source.lower()
+                
+                if "verify" in current_url or "verify" in page_source:
+                    logger.error("❌ 2FA/Verification required - cannot proceed automatically")
+                    return False
+                    
+                if "login" in current_url:
+                    logger.error("❌ Login failed - still on login page")
+                    return False
                 
             except Exception as e:
                 logger.error(f"❌ Login failed: {e}")

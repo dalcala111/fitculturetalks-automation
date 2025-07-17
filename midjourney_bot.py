@@ -197,18 +197,6 @@ def run_midjourney_automation():
                 logger.info("✅ Login submitted, waiting for authentication...")
                 time.sleep(random.uniform(5, 8))
                 
-                # Check for 2FA or verification
-                current_url = driver.current_url
-                page_source = driver.page_source.lower()
-                
-                if "verify" in current_url or "verify" in page_source:
-                    logger.error("❌ 2FA/Verification required - cannot proceed automatically")
-                    return False
-                    
-                if "login" in current_url:
-                    logger.error("❌ Login failed - still on login page")
-                    return False
-                
             except Exception as e:
                 logger.error(f"❌ Login failed: {e}")
                 return False

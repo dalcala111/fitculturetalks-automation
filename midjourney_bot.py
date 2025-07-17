@@ -251,15 +251,18 @@ def run_midjourney_automation():
             
             # PHASE 1: Ultra-slow, human-like page interaction
             try:
-                # Simulate real user - move mouse around first
+                # Simulate real user - move mouse around first (SAFE COORDINATES)
                 actions = ActionChains(driver)
                 
-                # Random mouse movements like a real user exploring the page
+                # Random mouse movements like a real user exploring the page (CONSTRAINED)
                 for _ in range(3):
-                    x = random.randint(100, 800)
-                    y = random.randint(100, 600)
+                    x = random.randint(50, 400)  # Safe X range
+                    y = random.randint(50, 300)  # Safe Y range
                     actions.move_by_offset(x, y).perform()
                     time.sleep(random.uniform(0.5, 1.5))
+                    # Reset position to avoid going out of bounds
+                    actions.move_by_offset(-x, -y).perform()
+                    time.sleep(random.uniform(0.2, 0.5))
                 
                 # Wait and look around like a human
                 time.sleep(random.uniform(2, 4))
@@ -273,19 +276,18 @@ def run_midjourney_automation():
                     except:
                         logger.info(f"🔍 Searching for login fields... attempt {attempt + 1}")
                         time.sleep(random.uniform(1, 2))
-                        actions.move_by_offset(random.randint(-50, 50), random.randint(-50, 50)).perform()
                 
                 if not email_field:
                     logger.error("❌ Could not find email field")
                     return False
                 
-                # ULTRA HUMAN-LIKE EMAIL ENTRY
+                # ULTRA HUMAN-LIKE EMAIL ENTRY (SAFE MOVEMENTS)
                 actions.move_to_element(email_field).perform()
                 time.sleep(random.uniform(1, 2))
                 
-                # Click with slight offset like a human
-                offset_x = random.randint(-5, 5)
-                offset_y = random.randint(-2, 2)
+                # Click with small safe offset like a human
+                offset_x = random.randint(-3, 3)  # Smaller safe offset
+                offset_y = random.randint(-2, 2)  # Smaller safe offset
                 actions.move_to_element_with_offset(email_field, offset_x, offset_y).perform()
                 time.sleep(random.uniform(0.3, 0.8))
                 actions.click().perform()
@@ -317,14 +319,14 @@ def run_midjourney_automation():
                 # Pause like human before moving to password
                 time.sleep(random.uniform(0.8, 1.5))
                 
-                # ULTRA HUMAN-LIKE PASSWORD ENTRY
+                # ULTRA HUMAN-LIKE PASSWORD ENTRY (SAFE MOVEMENTS)
                 password_field = driver.find_element(By.NAME, "password")
                 actions.move_to_element(password_field).perform()
                 time.sleep(random.uniform(0.5, 1))
                 
-                # Click password field with slight offset
-                offset_x = random.randint(-3, 3)
-                offset_y = random.randint(-2, 2)
+                # Click password field with small safe offset
+                offset_x = random.randint(-2, 2)  # Even smaller safe offset
+                offset_y = random.randint(-1, 1)  # Even smaller safe offset
                 actions.move_to_element_with_offset(password_field, offset_x, offset_y).perform()
                 time.sleep(random.uniform(0.3, 0.7))
                 actions.click().perform()
@@ -348,28 +350,24 @@ def run_midjourney_automation():
                 # Human pause before clicking login (double-checking)
                 time.sleep(random.uniform(1.2, 2.5))
                 
-                # Find and click login button with human behavior
+                # Find and click login button with human behavior (SAFE MOVEMENTS)
                 login_button = driver.find_element(By.XPATH, "//button[@type='submit']")
                 actions.move_to_element(login_button).perform()
                 time.sleep(random.uniform(0.8, 1.3))
                 
-                # Slight mouse movement like aiming
-                actions.move_by_offset(random.randint(-2, 2), random.randint(-1, 1)).perform()
+                # Tiny mouse movement like aiming (VERY SAFE)
+                actions.move_by_offset(random.randint(-1, 1), random.randint(-1, 1)).perform()
                 time.sleep(random.uniform(0.2, 0.5))
                 actions.click().perform()
                 
                 logger.info("✅ Login submitted with MAXIMUM human behavior")
                 
-                # ULTRA REALISTIC POST-LOGIN WAIT
+                # ULTRA REALISTIC POST-LOGIN WAIT (NO RISKY MOVEMENTS)
                 # Simulate human waiting and checking
                 wait_intervals = [3, 2, 4, 3, 2]  # Varied waiting like human
                 for i, interval in enumerate(wait_intervals):
                     time.sleep(interval + random.uniform(-0.5, 0.5))
-                    
-                    # Small mouse movements like human checking page
-                    if i < len(wait_intervals) - 1:
-                        actions.move_by_offset(random.randint(-30, 30), random.randint(-20, 20)).perform()
-                        time.sleep(random.uniform(0.2, 0.8))
+                    logger.info(f"⏳ Human-like waiting... step {i+1}/5")
                 
                 logger.info("⏳ Completed ultra-realistic login sequence")
                 

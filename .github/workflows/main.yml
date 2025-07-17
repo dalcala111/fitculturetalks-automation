@@ -2,7 +2,7 @@ name: "Midjourney Bot Automation"
 
 on:
   repository_dispatch:
-    types: [generate-image]
+    types: [trigger-midjourney]
   workflow_dispatch:
     inputs:
       prompt:

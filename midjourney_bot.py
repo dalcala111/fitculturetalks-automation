@@ -205,6 +205,20 @@ def run_midjourney_automation():
         # Human-like page load wait - EXACTLY like working version
         time.sleep(random.uniform(5, 8))
         
+        # Check if we're actually logged in
+        current_url = driver.current_url
+        logger.info(f"📍 Current URL: {current_url}")
+        
+        if "login" in current_url:
+            logger.error("❌ Still on login page - authentication failed")
+            return False
+        
+        # Check page content for debugging
+        page_source = driver.page_source
+        if "verify" in page_source.lower() or "captcha" in page_source.lower():
+            logger.error("❌ Verification/CAPTCHA required")
+            return False
+        
         # Add realistic mouse movement like working version
         add_realistic_mouse_movement(driver)
         
@@ -213,14 +227,34 @@ def run_midjourney_automation():
         # Human-like element finding delay
         time.sleep(random.uniform(1, 3))
         
-        # Wait for page to load
-        wait = WebDriverWait(driver, 20)
+        # Wait for page to load with multiple selector attempts
+        wait = WebDriverWait(driver, 30)
         
         try:
-            # Wait for and find the message input
-            message_box = wait.until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, '[data-slate-editor="true"]'))
-            )
+            # Try multiple selectors for Discord message input
+            selectors = [
+                '[data-slate-editor="true"]',
+                '[role="textbox"]',
+                'div[contenteditable="true"]',
+                '.markup-2BOw-j',
+                '#message-username'
+            ]
+            
+            message_box = None
+            for selector in selectors:
+                try:
+                    logger.info(f"🔍 Trying selector: {selector}")
+                    message_box = wait.until(EC.presence_of_element_located((By.CSS_SELECTOR, selector)))
+                    logger.info(f"✅ Found message input with selector: {selector}")
+                    break
+                except:
+                    continue
+            
+            if not message_box:
+                logger.error("❌ Could not find message input with any selector")
+                # Save page source for debugging
+                logger.info("📄 Page title: " + driver.title)
+                return False
             
             # Human-like mouse movement to element - LIKE WORKING VERSION
             actions = ActionChains(driver)

@@ -147,6 +147,9 @@ def run_midjourney_automation():
         # Add realistic browsing delay like working version
         time.sleep(random.uniform(4, 7))
         
+        # Initialize WebDriverWait
+        wait = WebDriverWait(driver, 20)
+        
         # Automated login with ultra stealth
         discord_email = os.getenv('DISCORD_EMAIL')
         discord_password = os.getenv('DISCORD_PASSWORD')

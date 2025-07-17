@@ -29,7 +29,7 @@ jobs:
     - name: Install Chrome and dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y wget gnupg
+        sudo apt-get install -y wget gnupg unzip
         wget -q -O - https://dl-ssl.google.com/linux/linux_signing_key.pub | sudo apt-key add -
         sudo sh -c 'echo "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google.list'
         sudo apt-get update
@@ -38,18 +38,11 @@ jobs:
         # Install Python dependencies
         pip install selenium
         
-        # Download ChromeDriver using the new method
-        CHROME_VERSION=$(google-chrome --version | cut -d ' ' -f3 | cut -d '.' -f1-3)
-        echo "Chrome version: $CHROME_VERSION"
+        # Install ChromeDriver using webdriver-manager (automatic version matching)
+        pip install webdriver-manager
         
-        # Download ChromeDriver from the new location
-        wget -O /tmp/chromedriver-linux64.zip "https://storage.googleapis.com/chrome-for-testing-public/${CHROME_VERSION}/linux64/chromedriver-linux64.zip"
-        sudo unzip /tmp/chromedriver-linux64.zip -d /tmp/
-        sudo mv /tmp/chromedriver-linux64/chromedriver /usr/local/bin/
-        sudo chmod +x /usr/local/bin/chromedriver
-        
-        # Verify installation
-        chromedriver --version
+        # Verify Chrome installation
+        google-chrome --version
         
     - name: Run Midjourney Bot
       env:

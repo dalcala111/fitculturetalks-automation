@@ -1,29 +1,44 @@
-name: Midjourney Automation
+name: "Ultimate Discord Bot Automation"
+
 on:
   repository_dispatch:
-    types: [generate-image]
+    types: [trigger-midjourney]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Midjourney prompt'
+        required: true
+        default: 'beautiful anime fitness girl doing morning yoga'
 
 jobs:
-  midjourney:
+  discord-bot:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+    - name: Set up job
+      run: echo "🚀 Starting Ultimate Discord Bot mission"
       
-      - name: Setup Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
+    - name: Checkout code
+      uses: actions/checkout@v4
       
-      - name: Install packages
-        run: |
-          pip install selenium requests
-          sudo apt-get update
-          sudo apt-get install -y chromium-browser
-      
-      - name: Run Midjourney Bot
-        run: python midjourney_bot.py "${{ github.event.client_payload.prompt }}"
-        env:
-          DISCORD_EMAIL: ${{ secrets.DISCORD_EMAIL }}
-          DISCORD_PASSWORD: ${{ secrets.DISCORD_PASSWORD }}
-          N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        # Install Python dependencies for Discord bot
+        pip install discord.py asyncio
+        
+    - name: Run Ultimate Discord Bot
+      env:
+        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
+        DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      run: |
+        # Run the ultimate stealth Discord bot
+        python midjourney_bot.py
+        
+    - name: Job completed
+      if: always()
+      run: echo "✅ Ultimate Discord Bot mission completed"

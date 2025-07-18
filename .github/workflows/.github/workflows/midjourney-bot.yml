@@ -28,10 +28,11 @@ jobs:
         
     - name: Install dependencies
       run: |
-        # Update pip and install Discord library
+        # Update pip and install from requirements
         python -m pip install --upgrade pip
-        pip install discord.py==2.3.2
-        pip list | grep discord
+        pip install -r requirements.txt
+        echo "📦 Installed packages:"
+        pip list
         
     - name: Run Ultimate Discord Bot
       env:

@@ -28,8 +28,10 @@ jobs:
         
     - name: Install dependencies
       run: |
-        # Install Python dependencies for Discord bot
-        pip install discord.py asyncio
+        # Update pip and install Discord library
+        python -m pip install --upgrade pip
+        pip install discord.py==2.3.2
+        pip list | grep discord
         
     - name: Run Ultimate Discord Bot
       env:

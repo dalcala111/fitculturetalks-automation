@@ -1,1 +1,45 @@
+name: "Ultimate Discord Bot Automation"
 
+on:
+  repository_dispatch:
+    types: [trigger-midjourney]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: 'Midjourney prompt'
+        required: true
+        default: 'beautiful anime fitness girl doing morning yoga'
+
+jobs:
+  discord-bot:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Set up job
+      run: echo "🚀 Starting Ultimate Discord Bot mission"
+      
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        echo "📦 Installed packages:"
+        pip list
+        
+    - name: Run Ultimate Discord Bot
+      env:
+        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
+        DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+      run: |
+        python midjourney_bot.py
+        
+    - name: Job completed
+      if: always()
+      run: echo "✅ Ultimate Discord Bot mission completed"

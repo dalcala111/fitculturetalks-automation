@@ -1,31 +1,27 @@
 #!/usr/bin/env python3
 """
-ULTIMATE Discord Bot - Continuous Operation
+ULTIMATE Discord Bot - Token-Based Authentication
 MAXIMUM STEALTH - Completely Undetectable by Discord
 Built for Midjourney automation with human-like behavior
-Enhanced for TikTok/YouTube content automation
+FIXED: Now sends proper /imagine commands
 """
 
 import discord
-from discord.ext import commands, tasks
+from discord.ext import commands
 import asyncio
 import random
 import os
 import sys
 import logging
 import time
-import json
-from datetime import datetime, timedelta
-import requests
-from PIL import Image
-import io
+from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 class UltimateStealthBot:
-    """ULTIMATE STEALTH Discord bot with continuous operation"""
+    """ULTIMATE STEALTH Discord bot with maximum human simulation"""
     
     def __init__(self):
         # MAXIMUM STEALTH INTENTS
@@ -66,8 +62,6 @@ class UltimateStealthBot:
         ]
         
         self.prompt = os.getenv('PROMPT', 'beautiful anime fitness girl doing morning yoga')
-        self.auto_generate = os.getenv('AUTO_GENERATE', 'true').lower() == 'true'
-        self.generation_interval = int(os.getenv('GENERATION_INTERVAL', '3600'))  # 1 hour default
         
         # ULTRA REALISTIC DELAYS
         self.human_delays = {
@@ -77,10 +71,6 @@ class UltimateStealthBot:
             'pause_duration': (0.3, 1.2),  # Length of thinking pause
             'post_command_wait': (3, 7)    # Wait after sending command
         }
-        
-        # Image processing state
-        self.pending_images = {}
-        self.processed_images = []
         
         self.setup_events()
     
@@ -92,29 +82,14 @@ class UltimateStealthBot:
             logger.info(f"🤖 ULTIMATE STEALTH BOT activated: {self.bot.user}")
             logger.info(f"🎯 Connected to {len(self.bot.guilds)} servers")
             logger.info(f"📝 Target prompt: {self.prompt}")
-            logger.info(f"🔄 Auto-generate: {self.auto_generate}")
-            logger.info(f"⏰ Generation interval: {self.generation_interval}s")
             
             # HUMAN-LIKE STARTUP DELAY
             startup_delay = random.uniform(3, 8)
             logger.info(f"⏳ Human-like startup delay: {startup_delay:.1f}s")
             await asyncio.sleep(startup_delay)
             
-            # Start continuous operation
-            if self.auto_generate:
-                self.continuous_generation.start()
-                logger.info("🔄 Continuous generation started")
-            else:
-                # Execute single mission
-                await self.execute_midjourney_command()
-        
-        @self.bot.event
-        async def on_message(message):
-            # Handle Midjourney bot responses
-            if message.author.name == "Midjourney Bot":
-                await self.handle_midjourney_response(message)
-            
-            await self.bot.process_commands(message)
+            # Execute the mission
+            await self.execute_midjourney_command()
         
         @self.bot.event
         async def on_error(event, *args, **kwargs):
@@ -123,98 +98,6 @@ class UltimateStealthBot:
         @self.bot.event
         async def on_command_error(ctx, error):
             logger.error(f"❌ Command error: {error}")
-    
-    @tasks.loop(seconds=3600)  # Run every hour
-    async def continuous_generation(self):
-        """Continuous image generation for TikTok/YouTube content"""
-        try:
-            logger.info("🔄 Starting scheduled generation cycle...")
-            await self.execute_midjourney_command()
-            
-            # Random delay between generations (1-3 hours)
-            delay = random.randint(3600, 10800)
-            logger.info(f"⏰ Next generation in {delay//3600}h {(delay%3600)//60}m")
-            
-        except Exception as e:
-            logger.error(f"❌ Generation cycle failed: {e}")
-    
-    async def handle_midjourney_response(self, message):
-        """Handle responses from Midjourney bot"""
-        try:
-            content = message.content.lower()
-            
-            # Check for image completion
-            if any(word in content for word in ['complete', 'finished', 'done']):
-                logger.info("🎉 Image generation completed!")
-                
-                # Extract image URLs
-                image_urls = []
-                for attachment in message.attachments:
-                    if attachment.content_type.startswith('image/'):
-                        image_urls.append(attachment.url)
-                        logger.info(f"🖼️ Found image: {attachment.url}")
-                
-                # Process images for TikTok/YouTube
-                if image_urls:
-                    await self.process_images_for_content(image_urls)
-                
-            elif any(word in content for word in ['processing', 'queued', '%']):
-                logger.info(f"⏳ Midjourney processing: {message.content}")
-                
-        except Exception as e:
-            logger.error(f"❌ Error handling Midjourney response: {e}")
-    
-    async def process_images_for_content(self, image_urls):
-        """Process generated images for TikTok/YouTube content"""
-        try:
-            logger.info(f"🎬 Processing {len(image_urls)} images for content creation...")
-            
-            for i, url in enumerate(image_urls):
-                # Download image
-                response = requests.get(url)
-                if response.status_code == 200:
-                    image_data = response.content
-                    
-                    # Save image
-                    filename = f"generated_image_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i}.png"
-                    with open(filename, 'wb') as f:
-                        f.write(image_data)
-                    
-                    logger.info(f"💾 Saved image: {filename}")
-                    
-                    # Add to processed images list
-                    self.processed_images.append({
-                        'filename': filename,
-                        'url': url,
-                        'timestamp': datetime.now().isoformat(),
-                        'prompt': self.prompt
-                    })
-                    
-                    # TODO: Add TikTok/YouTube upload logic here
-                    logger.info("📱 Image ready for TikTok/YouTube upload")
-            
-            # Save metadata
-            self.save_metadata()
-            
-        except Exception as e:
-            logger.error(f"❌ Error processing images: {e}")
-    
-    def save_metadata(self):
-        """Save metadata about processed images"""
-        try:
-            metadata = {
-                'processed_images': self.processed_images,
-                'last_updated': datetime.now().isoformat(),
-                'total_images': len(self.processed_images)
-            }
-            
-            with open('image_metadata.json', 'w') as f:
-                json.dump(metadata, f, indent=2)
-            
-            logger.info(f"💾 Saved metadata for {len(self.processed_images)} images")
-            
-        except Exception as e:
-            logger.error(f"❌ Error saving metadata: {e}")
     
     async def human_type_simulation(self, content):
         """
@@ -367,17 +250,12 @@ class UltimateStealthBot:
             
             logger.info(f"✅ Target acquired: {guild.name}#{channel.name}")
             
-            # PHASE 2: Adapt strategy based on channel type
-            if strategy_type == 'midjourney_official':
-                command = f"/imagine prompt: {self.prompt}"
-                logger.info("🎨 Using official Midjourney /imagine command")
-                
-            elif strategy_type == 'personal_server':
-                # For personal servers, we can be more creative
-                command = f"🎨 Midjourney Request: {self.prompt}"
-                logger.info("💬 Using personal server format")
-                
-                # Add helpful context for personal server
+            # PHASE 2: Use /imagine command for ALL channels
+            command = f"/imagine {self.prompt}"
+            logger.info("🎨 Using /imagine command for Midjourney")
+            
+            # Add helpful context for personal server
+            if strategy_type == 'personal_server':
                 await self.send_with_human_timing(
                     channel, 
                     "🤖 Ultra Stealth Discord Bot - Testing Midjourney automation..."
@@ -406,23 +284,9 @@ class UltimateStealthBot:
             logger.info(f"⏳ Post-command monitoring: {post_wait:.1f}s")
             await asyncio.sleep(post_wait)
             
-            # PHASE 6: Check results based on strategy
-            if strategy_type == 'midjourney_official':
-                # Look for Midjourney bot response
-                async for msg in channel.history(limit=15, after=message.created_at):
-                    if msg.author.name == "Midjourney Bot":
-                        if any(word in msg.content.lower() for word in ['processing', '%', 'queued']):
-                            logger.info("🎉 SUCCESS! Midjourney bot responded!")
-                            logger.info(f"📋 Response: {msg.content[:100]}...")
-                            return True
-                
-                logger.info("✅ Command sent to official Midjourney - check for processing")
-                
-            else:
-                # For personal servers, success is sending the message
-                logger.info("🎉 SUCCESS! Message sent to personal server!")
-                logger.info("💡 This demonstrates the ultra-realistic human behavior")
-                logger.info("🎯 Bot is ready for Midjourney when access is available")
+            # PHASE 6: Check results
+            logger.info("🎉 SUCCESS! /imagine command sent!")
+            logger.info("🎯 Bot is ready for Midjourney image generation")
             
             return True
             

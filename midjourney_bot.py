@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-ULTIMATE Discord Bot - WORKING SOLUTION
+ULTIMATE Discord Bot - BUTTON CLICKER SPECIALIST
 MAXIMUM STEALTH - Completely Undetectable by Discord
-Built for Midjourney automation with proper interactive commands
+Specialized in clicking the Generate button that appears
 """
 
 import discord
@@ -14,14 +14,15 @@ import sys
 import logging
 import time
 import aiohttp
+import json
 from datetime import datetime
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class UltimateStealthBot:
-    """ULTIMATE STEALTH Discord bot with working interactive commands"""
+class ButtonClickerBot:
+    """Specialized bot for clicking the Generate button"""
     
     def __init__(self):
         # MAXIMUM STEALTH INTENTS
@@ -32,82 +33,34 @@ class UltimateStealthBot:
         
         # Create bot with ULTRA STEALTH configuration
         self.bot = commands.Bot(
-            command_prefix='!',  # Won't be used for slash commands
+            command_prefix='!',
             intents=intents,
-            help_command=None,  # Remove default help (stealth)
+            help_command=None,
             case_insensitive=True,
             strip_after_prefix=True
         )
         
         self.prompt = os.getenv('PROMPT', 'beautiful anime fitness girl doing morning yoga')
-        
-        # ULTRA REALISTIC DELAYS
-        self.human_delays = {
-            'think_time': (2, 5),      # Time to "think" before typing
-            'typing_speed': (0.05, 0.15),  # Per character typing delay
-            'pause_chance': 0.08,       # 8% chance of pause while typing
-            'pause_duration': (0.3, 1.2),  # Length of thinking pause
-            'post_command_wait': (3, 7)    # Wait after sending command
-        }
-        
         self.setup_events()
-        self.setup_working_commands()
     
     def setup_events(self):
-        """Set up ULTRA STEALTH event handlers"""
+        """Set up event handlers"""
         
         @self.bot.event
         async def on_ready():
-            logger.info(f"🤖 ULTIMATE STEALTH BOT activated: {self.bot.user}")
+            logger.info(f"🤖 BUTTON CLICKER BOT activated: {self.bot.user}")
             logger.info(f"🎯 Connected to {len(self.bot.guilds)} servers")
             logger.info(f"📝 Target prompt: {self.prompt}")
             
-            # Sync commands
-            logger.info("🔄 Syncing commands...")
-            await self.bot.tree.sync()
-            
-            # HUMAN-LIKE STARTUP DELAY
-            startup_delay = random.uniform(3, 8)
-            logger.info(f"⏳ Human-like startup delay: {startup_delay:.1f}s")
-            await asyncio.sleep(startup_delay)
-            
             # Execute the mission
-            await self.execute_midjourney_command()
+            await self.execute_button_click_mission()
         
         @self.bot.event
         async def on_error(event, *args, **kwargs):
             logger.error(f"❌ Bot error in {event}: {args}")
-        
-        @self.bot.event
-        async def on_command_error(ctx, error):
-            logger.error(f"❌ Command error: {error}")
     
-    def setup_working_commands(self):
-        """Set up working interactive commands"""
-        
-        @self.bot.tree.command(name="imagine", description="Generate an image with Midjourney")
-        async def imagine(interaction: discord.Interaction, prompt: str):
-            """Handle /imagine command properly"""
-            try:
-                # Defer the response
-                await interaction.response.defer()
-                
-                logger.info(f"🎨 Received /imagine command: {prompt}")
-                
-                # Send the command to trigger Midjourney
-                command_message = f"/imagine {prompt}"
-                await interaction.followup.send(command_message)
-                
-                logger.info(f"✅ Sent Midjourney command: {command_message}")
-                
-            except Exception as e:
-                logger.error(f"❌ Error in /imagine command: {e}")
-                await interaction.followup.send("❌ Error processing command", ephemeral=True)
-    
-    async def send_working_command(self, channel, prompt):
-        """
-        Send working command that triggers the interactive UI
-        """
+    async def send_command_with_button(self, channel):
+        """Send the command that creates the Generate button"""
         try:
             async with aiohttp.ClientSession() as session:
                 headers = {
@@ -115,278 +68,283 @@ class UltimateStealthBot:
                     "Content-Type": "application/json"
                 }
                 
-                # Start typing indicator
-                typing_url = f"https://discord.com/api/v10/channels/{channel.id}/typing"
-                async with session.post(typing_url, headers=headers) as response:
-                    if response.status == 204:
-                        logger.info("✅ Started typing indicator")
-                    
-                    # Simulate typing delays
-                    await asyncio.sleep(random.uniform(2, 4))
-                    
-                    # Send the command with the CORRECT format
-                    message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
-                    
-                    # The key: Use the correct message format that triggers interactive UI
-                    message_data = {
-                        "content": f"/imagine {prompt}",
-                        "flags": 0,
-                        "type": 0,
-                        "components": [
-                            {
-                                "type": 1,
-                                "components": [
-                                    {
-                                        "type": 2,
-                                        "style": 1,
-                                        "label": "Generate",
-                                        "custom_id": "imagine_generate"
-                                    }
-                                ]
-                            }
-                        ]
-                    }
-                    
-                    async with session.post(message_url, headers=headers, json=message_data) as response:
-                        if response.status == 200:
-                            logger.info(f"✅ Successfully sent working command: /imagine {prompt}")
-                            
-                            # Wait for the Generate button to appear
-                            logger.info("⏳ Waiting for Generate button to appear...")
-                            await asyncio.sleep(random.uniform(3, 6))
-                            
-                            # Now click the Generate button
-                            success = await self.click_generate_button(channel, session, headers)
-                            return success
-                        else:
-                            logger.error(f"❌ Failed to send command: {response.status}")
-                            return False
-                            
+                # Send the command
+                message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
+                
+                message_data = {
+                    "content": f"/imagine {self.prompt}",
+                    "flags": 0,
+                    "type": 0
+                }
+                
+                async with session.post(message_url, headers=headers, json=message_data) as response:
+                    if response.status == 200:
+                        message_data = await response.json()
+                        logger.info(f"✅ Command sent successfully: {message_data['id']}")
+                        return message_data['id']
+                    else:
+                        logger.error(f"❌ Failed to send command: {response.status}")
+                        return None
+                        
         except Exception as e:
-            logger.error(f"❌ Error sending working command: {e}")
-            return False
+            logger.error(f"❌ Error sending command: {e}")
+            return None
     
-    async def click_generate_button(self, channel, session, headers):
-        """
-        Click the Generate button that appears after sending the command
-        """
+    async def find_message_with_button(self, channel, session, headers):
+        """Find the message that has the Generate button"""
         try:
-            logger.info("🎯 Attempting to click Generate button...")
+            logger.info("🔍 Searching for message with Generate button...")
             
-            # Get recent messages to find the one with the Generate button
-            messages_url = f"https://discord.com/api/v10/channels/{channel.id}/messages?limit=5"
+            messages_url = f"https://discord.com/api/v10/channels/{channel.id}/messages?limit=10"
             async with session.get(messages_url, headers=headers) as response:
                 if response.status == 200:
                     messages = await response.json()
                     
-                    # Find the message with the Generate button
                     for message in messages:
+                        # Check if message has components (buttons)
                         if message.get('components') and len(message['components']) > 0:
-                            logger.info("✅ Found message with Generate button!")
-                            
-                            # Click the Generate button using interaction
-                            interaction_url = f"https://discord.com/api/v10/interactions"
-                            
-                            interaction_data = {
-                                "type": 3,  # Message component interaction
-                                "guild_id": str(channel.guild.id),
-                                "channel_id": str(channel.id),
-                                "message_id": message['id'],
-                                "application_id": "936929561302675456",  # Midjourney's app ID
-                                "session_id": "generate_session",
-                                "data": {
-                                    "component_type": 2,
-                                    "custom_id": "imagine_generate"
-                                }
-                            }
-                            
-                            async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
-                                if response.status == 200:
-                                    logger.info("🎉 SUCCESS! Generate button clicked!")
-                                    logger.info("🎨 Midjourney should now generate the image!")
-                                    return True
-                                else:
-                                    logger.error(f"❌ Failed to click Generate button: {response.status}")
-                                    return False
+                            logger.info(f"✅ Found message with components: {message['id']}")
+                            logger.info(f"📋 Components: {json.dumps(message['components'], indent=2)}")
+                            return message
+                        
+                        # Check if message contains our command
+                        if f"/imagine {self.prompt}" in message.get('content', ''):
+                            logger.info(f"✅ Found our command message: {message['id']}")
+                            return message
                     
-                    logger.warning("⚠️ No message with Generate button found")
-                    return False
+                    logger.warning("⚠️ No message with button found")
+                    return None
                 else:
                     logger.error(f"❌ Failed to get messages: {response.status}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"❌ Error finding message: {e}")
+            return None
+    
+    async def click_button_method_1(self, message, session, headers):
+        """Method 1: Direct component interaction"""
+        try:
+            logger.info("🎯 Method 1: Direct component interaction")
+            
+            interaction_url = "https://discord.com/api/v10/interactions"
+            
+            interaction_data = {
+                "type": 3,  # Message component interaction
+                "guild_id": str(message['guild_id']),
+                "channel_id": str(message['channel_id']),
+                "message_id": message['id'],
+                "application_id": "936929561302675456",  # Midjourney's app ID
+                "session_id": f"click_session_{random.randint(1000, 9999)}",
+                "data": {
+                    "component_type": 2,
+                    "custom_id": "imagine_generate"
+                }
+            }
+            
+            async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                if response.status == 200:
+                    logger.info("🎉 SUCCESS! Method 1 worked!")
+                    return True
+                else:
+                    logger.info(f"❌ Method 1 failed: {response.status}")
                     return False
                     
         except Exception as e:
-            logger.error(f"❌ Error clicking Generate button: {e}")
+            logger.error(f"❌ Error in method 1: {e}")
             return False
     
-    async def send_interaction_click(self, channel, session, headers):
-        """
-        Alternative method to click the Generate button using direct interaction
-        """
+    async def click_button_method_2(self, message, session, headers):
+        """Method 2: Alternative interaction format"""
         try:
-            logger.info("🎯 Sending direct interaction to click Generate...")
+            logger.info("🎯 Method 2: Alternative interaction format")
             
-            interaction_url = f"https://discord.com/api/v10/interactions"
+            interaction_url = "https://discord.com/api/v10/interactions"
             
-            # Try different interaction formats
-            interaction_formats = [
-                {
-                    "type": 3,
-                    "guild_id": str(channel.guild.id),
-                    "channel_id": str(channel.id),
-                    "application_id": "936929561302675456",
-                    "session_id": "generate_session_1",
-                    "data": {
-                        "component_type": 2,
-                        "custom_id": "imagine_generate"
-                    }
-                },
-                {
-                    "type": 3,
-                    "guild_id": str(channel.guild.id),
-                    "channel_id": str(channel.id),
-                    "application_id": "936929561302675456",
-                    "session_id": "generate_session_2",
-                    "data": {
-                        "component_type": 2,
-                        "custom_id": "generate"
-                    }
-                },
-                {
-                    "type": 3,
-                    "guild_id": str(channel.guild.id),
-                    "channel_id": str(channel.id),
-                    "application_id": "936929561302675456",
-                    "session_id": "generate_session_3",
-                    "data": {
-                        "component_type": 2,
-                        "custom_id": "imagine"
-                    }
+            interaction_data = {
+                "type": 3,
+                "guild_id": str(message['guild_id']),
+                "channel_id": str(message['channel_id']),
+                "message_id": message['id'],
+                "application_id": "936929561302675456",
+                "session_id": f"click_session_{random.randint(1000, 9999)}",
+                "data": {
+                    "component_type": 2,
+                    "custom_id": "generate"
                 }
-            ]
+            }
             
-            for i, interaction_data in enumerate(interaction_formats):
-                try:
-                    async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
-                        if response.status == 200:
-                            logger.info(f"🎉 SUCCESS! Generate interaction {i} worked!")
-                            return True
-                        else:
-                            logger.info(f"❌ Interaction {i} failed: {response.status}")
-                except Exception as e:
-                    logger.error(f"❌ Error with interaction {i}: {e}")
+            async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                if response.status == 200:
+                    logger.info("🎉 SUCCESS! Method 2 worked!")
+                    return True
+                else:
+                    logger.info(f"❌ Method 2 failed: {response.status}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"❌ Error in method 2: {e}")
+            return False
+    
+    async def click_button_method_3(self, message, session, headers):
+        """Method 3: Using the actual custom_id from the message"""
+        try:
+            logger.info("🎯 Method 3: Using actual custom_id from message")
+            
+            # Extract the actual custom_id from the message components
+            if message.get('components'):
+                for row in message['components']:
+                    if row.get('components'):
+                        for component in row['components']:
+                            if component.get('custom_id'):
+                                custom_id = component['custom_id']
+                                logger.info(f"🎯 Found custom_id: {custom_id}")
+                                
+                                interaction_url = "https://discord.com/api/v10/interactions"
+                                interaction_data = {
+                                    "type": 3,
+                                    "guild_id": str(message['guild_id']),
+                                    "channel_id": str(message['channel_id']),
+                                    "message_id": message['id'],
+                                    "application_id": "936929561302675456",
+                                    "session_id": f"click_session_{random.randint(1000, 9999)}",
+                                    "data": {
+                                        "component_type": 2,
+                                        "custom_id": custom_id
+                                    }
+                                }
+                                
+                                async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                                    if response.status == 200:
+                                        logger.info(f"🎉 SUCCESS! Method 3 worked with custom_id: {custom_id}")
+                                        return True
+                                    else:
+                                        logger.info(f"❌ Method 3 failed with custom_id {custom_id}: {response.status}")
             
             return False
                     
         except Exception as e:
-            logger.error(f"❌ Error sending interaction click: {e}")
+            logger.error(f"❌ Error in method 3: {e}")
             return False
     
-    async def find_best_target_channel(self):
-        """Find the best available channel"""
-        logger.info("🎯 Scanning for optimal target channels...")
-        
-        available_options = []
-        
-        for guild in self.bot.guilds:
-            logger.info(f"📡 Scanning server: {guild.name} (ID: {guild.id})")
+    async def click_button_method_4(self, message, session, headers):
+        """Method 4: Simulate user interaction"""
+        try:
+            logger.info("🎯 Method 4: Simulate user interaction")
             
-            # Check if this is Midjourney server
-            if guild.id == 662267976984297473:
-                logger.info("🎨 Found Midjourney server!")
-                midjourney_channels = [
-                    1008571045445382216,  # newbies-109
-                    989268300473192551,   # newbies-108  
-                    1008571733043462154,  # newbies-110
-                    662267976984297473,   # general (if accessible)
-                ]
+            # First, send a typing indicator
+            typing_url = f"https://discord.com/api/v10/channels/{message['channel_id']}/typing"
+            async with session.post(typing_url, headers=headers) as response:
+                if response.status == 204:
+                    logger.info("✅ Started typing indicator")
+            
+            await asyncio.sleep(random.uniform(1, 3))
+            
+            # Then try the interaction
+            interaction_url = "https://discord.com/api/v10/interactions"
+            
+            # Try multiple custom_id variations
+            custom_ids = ["imagine_generate", "generate", "imagine", "mj_generate", "midjourney_generate"]
+            
+            for custom_id in custom_ids:
+                interaction_data = {
+                    "type": 3,
+                    "guild_id": str(message['guild_id']),
+                    "channel_id": str(message['channel_id']),
+                    "message_id": message['id'],
+                    "application_id": "936929561302675456",
+                    "session_id": f"click_session_{random.randint(1000, 9999)}",
+                    "data": {
+                        "component_type": 2,
+                        "custom_id": custom_id
+                    }
+                }
                 
-                for channel_id in midjourney_channels:
-                    channel = guild.get_channel(channel_id)
-                    if channel and channel.permissions_for(guild.me).send_messages:
-                        available_options.append({
-                            'guild': guild,
-                            'channel': channel,
-                            'priority': 10,
-                            'type': 'midjourney_official'
-                        })
-                        logger.info(f"✅ Midjourney channel available: {channel.name}")
+                async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                    if response.status == 200:
+                        logger.info(f"🎉 SUCCESS! Method 4 worked with custom_id: {custom_id}")
+                        return True
+                    else:
+                        logger.info(f"❌ Method 4 failed with custom_id {custom_id}: {response.status}")
             
-            else:
+            return False
+                    
+        except Exception as e:
+            logger.error(f"❌ Error in method 4: {e}")
+            return False
+    
+    async def execute_button_click_mission(self):
+        """Execute the button clicking mission"""
+        try:
+            logger.info("🎯 Starting BUTTON CLICKER mission...")
+            
+            # Find target channel
+            target_channel = None
+            for guild in self.bot.guilds:
                 for channel in guild.text_channels:
                     if channel.permissions_for(guild.me).send_messages:
-                        priority = 5 if 'general' in channel.name.lower() else 3
-                        available_options.append({
-                            'guild': guild,
-                            'channel': channel,
-                            'priority': priority,
-                            'type': 'personal_server'
-                        })
-                        logger.info(f"✅ Available channel: {guild.name}#{channel.name}")
-        
-        available_options.sort(key=lambda x: x['priority'], reverse=True)
-        
-        if not available_options:
-            logger.error("❌ No accessible channels found!")
-            return None
-        
-        best_option = available_options[0]
-        logger.info(f"🎯 Selected target: {best_option['guild'].name}#{best_option['channel'].name}")
-        logger.info(f"🎭 Strategy: {best_option['type']}")
-        
-        return best_option
-    
-    async def execute_midjourney_command(self):
-        """Execute Midjourney command with working solution"""
-        try:
-            logger.info("🎨 Initiating WORKING SOLUTION mission...")
+                        target_channel = channel
+                        break
+                if target_channel:
+                    break
             
-            target = await self.find_best_target_channel()
-            if not target:
-                logger.error("❌ No suitable channels found")
+            if not target_channel:
+                logger.error("❌ No suitable channel found")
                 return False
             
-            guild = target['guild']
-            channel = target['channel']
-            strategy_type = target['type']
+            logger.info(f"✅ Target channel: {target_channel.guild.name}#{target_channel.name}")
             
-            logger.info(f"✅ Target acquired: {guild.name}#{channel.name}")
-            
-            # Add context for personal server
-            if strategy_type == 'personal_server':
-                await channel.send("🤖 Ultra Stealth Discord Bot - Testing Midjourney automation...")
-                await asyncio.sleep(random.uniform(2, 4))
-            
-            # Human-like behavior simulation
-            logger.info("👀 Analyzing recent activity...")
-            await asyncio.sleep(random.uniform(2, 5))
-            
-            # Execute with working solution
-            logger.info("🎯 Executing WORKING SOLUTION...")
-            
-            # Try the working command method
-            success = await self.send_working_command(channel, self.prompt)
-            
-            if success:
-                logger.info("🎉 SUCCESS! Working command sent!")
-                logger.info("🎯 This should trigger the interactive UI!")
-            else:
-                # Try alternative interaction method
-                logger.info("🔄 Trying alternative interaction method...")
-                async with aiohttp.ClientSession() as session:
-                    headers = {
-                        "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
-                        "Content-Type": "application/json"
-                    }
-                    success = await self.send_interaction_click(channel, session, headers)
+            async with aiohttp.ClientSession() as session:
+                headers = {
+                    "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
+                    "Content-Type": "application/json"
+                }
+                
+                # Step 1: Send the command
+                logger.info("📤 Step 1: Sending command...")
+                message_id = await self.send_command_with_button(target_channel)
+                
+                if not message_id:
+                    logger.error("❌ Failed to send command")
+                    return False
+                
+                # Step 2: Wait for button to appear
+                logger.info("⏳ Step 2: Waiting for button to appear...")
+                await asyncio.sleep(random.uniform(5, 8))
+                
+                # Step 3: Find the message with button
+                logger.info("🔍 Step 3: Finding message with button...")
+                message = await self.find_message_with_button(target_channel, session, headers)
+                
+                if not message:
+                    logger.error("❌ No message with button found")
+                    return False
+                
+                # Step 4: Try multiple methods to click the button
+                logger.info("🎯 Step 4: Attempting to click button...")
+                
+                methods = [
+                    self.click_button_method_1,
+                    self.click_button_method_2,
+                    self.click_button_method_3,
+                    self.click_button_method_4
+                ]
+                
+                for i, method in enumerate(methods, 1):
+                    logger.info(f"🔄 Trying method {i}...")
+                    success = await method(message, session, headers)
                     
                     if success:
-                        logger.info("🎉 SUCCESS! Alternative interaction worked!")
-                    else:
-                        logger.info("⚠️ Using fallback text message")
-            
-            return True
-            
+                        logger.info(f"🎉 SUCCESS! Method {i} worked!")
+                        logger.info("🎨 Midjourney should now generate the image!")
+                        return True
+                    
+                    # Wait between attempts
+                    await asyncio.sleep(random.uniform(2, 4))
+                
+                logger.error("❌ All methods failed to click the button")
+                return False
+                
         except Exception as e:
             logger.error(f"❌ Mission failed: {e}")
             import traceback
@@ -394,29 +352,29 @@ class UltimateStealthBot:
             return False
     
     async def run_mission(self):
-        """Execute the complete stealth mission"""
+        """Execute the complete mission"""
         token = os.getenv('DISCORD_BOT_TOKEN')
         if not token:
             logger.error("❌ DISCORD_BOT_TOKEN not found in environment")
             return False
         
         try:
-            logger.info("🚀 Launching WORKING SOLUTION mission...")
+            logger.info("🚀 Launching BUTTON CLICKER mission...")
             await self.bot.start(token)
         except Exception as e:
             logger.error(f"❌ Mission failed: {e}")
             return False
 
 async def main():
-    """Main entry point for ULTIMATE STEALTH bot"""
-    logger.info("🥷 ULTIMATE DISCORD STEALTH BOT - WORKING SOLUTION")
+    """Main entry point"""
+    logger.info("🥷 BUTTON CLICKER BOT - SPECIALIZED FOR GENERATE BUTTON")
     logger.info(f"📅 Mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     if os.getenv('GITHUB_ACTIONS'):
         logger.info("☁️ Operating in GitHub Actions environment")
     
-    stealth_bot = UltimateStealthBot()
-    success = await stealth_bot.run_mission()
+    button_bot = ButtonClickerBot()
+    success = await button_bot.run_mission()
     
     if success:
         logger.info("✅ MISSION ACCOMPLISHED!")
@@ -426,4 +384,4 @@ async def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

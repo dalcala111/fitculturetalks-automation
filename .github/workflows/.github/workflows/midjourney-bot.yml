@@ -36,13 +36,10 @@ jobs:
         
     - name: Install dependencies
       run: |
-        # Update pip and install required packages
+        # Update pip and install from requirements
         python -m pip install --upgrade pip
-        pip install discord.py
-        pip install PyNaCl
-        pip install Pillow
-        pip install requests
-        echo "📦 Installed packages:"
+        pip install -r requirements.txt
+        echo "�� Installed packages:"
         pip list
         
     - name: Run Ultimate Discord Bot

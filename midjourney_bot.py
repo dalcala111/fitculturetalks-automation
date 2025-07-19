@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-ULTIMATE Discord Bot - BUTTON CLICKER SPECIALIST
+ULTIMATE Discord Bot - COMPLETE SOLUTION
 MAXIMUM STEALTH - Completely Undetectable by Discord
-Specialized in clicking the Generate button that appears
+Sends command with interactive components AND clicks the Generate button
 """
 
 import discord
@@ -21,8 +21,8 @@ from datetime import datetime
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-class ButtonClickerBot:
-    """Specialized bot for clicking the Generate button"""
+class CompleteSolutionBot:
+    """Complete solution that creates AND clicks the Generate button"""
     
     def __init__(self):
         # MAXIMUM STEALTH INTENTS
@@ -48,46 +48,147 @@ class ButtonClickerBot:
         
         @self.bot.event
         async def on_ready():
-            logger.info(f"🤖 BUTTON CLICKER BOT activated: {self.bot.user}")
+            logger.info(f"🤖 COMPLETE SOLUTION BOT activated: {self.bot.user}")
             logger.info(f"🎯 Connected to {len(self.bot.guilds)} servers")
             logger.info(f"📝 Target prompt: {self.prompt}")
             
             # Execute the mission
-            await self.execute_button_click_mission()
+            await self.execute_complete_mission()
         
         @self.bot.event
         async def on_error(event, *args, **kwargs):
             logger.error(f"❌ Bot error in {event}: {args}")
     
-    async def send_command_with_button(self, channel):
-        """Send the command that creates the Generate button"""
+    async def send_command_with_components(self, channel, session, headers):
+        """Send command with interactive components to create the Generate button"""
         try:
-            async with aiohttp.ClientSession() as session:
-                headers = {
-                    "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
-                    "Content-Type": "application/json"
-                }
-                
-                # Send the command
-                message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
-                
-                message_data = {
+            logger.info("📤 Sending command with interactive components...")
+            
+            message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
+            
+            # Send with interactive components that create the Generate button
+            message_data = {
+                "content": f"/imagine {self.prompt}",
+                "flags": 0,
+                "type": 0,
+                "components": [
+                    {
+                        "type": 1,
+                        "components": [
+                            {
+                                "type": 2,
+                                "style": 1,
+                                "label": "Generate",
+                                "custom_id": "imagine_generate"
+                            }
+                        ]
+                    }
+                ]
+            }
+            
+            async with session.post(message_url, headers=headers, json=message_data) as response:
+                if response.status == 200:
+                    message_data = await response.json()
+                    logger.info(f"✅ Command with components sent successfully: {message_data['id']}")
+                    return message_data['id']
+                else:
+                    logger.error(f"❌ Failed to send command with components: {response.status}")
+                    return None
+                    
+        except Exception as e:
+            logger.error(f"❌ Error sending command with components: {e}")
+            return None
+    
+    async def send_alternative_command(self, channel, session, headers):
+        """Send alternative command format that might create the button"""
+        try:
+            logger.info("📤 Trying alternative command format...")
+            
+            message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
+            
+            # Try different component formats
+            component_formats = [
+                # Format 1: Standard button
+                {
                     "content": f"/imagine {self.prompt}",
                     "flags": 0,
-                    "type": 0
+                    "type": 0,
+                    "components": [
+                        {
+                            "type": 1,
+                            "components": [
+                                {
+                                    "type": 2,
+                                    "style": 1,
+                                    "label": "Generate",
+                                    "custom_id": "generate"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                # Format 2: Different custom_id
+                {
+                    "content": f"/imagine {self.prompt}",
+                    "flags": 0,
+                    "type": 0,
+                    "components": [
+                        {
+                            "type": 1,
+                            "components": [
+                                {
+                                    "type": 2,
+                                    "style": 1,
+                                    "label": "Generate",
+                                    "custom_id": "mj_generate"
+                                }
+                            ]
+                        }
+                    ]
+                },
+                # Format 3: Multiple buttons
+                {
+                    "content": f"/imagine {self.prompt}",
+                    "flags": 0,
+                    "type": 0,
+                    "components": [
+                        {
+                            "type": 1,
+                            "components": [
+                                {
+                                    "type": 2,
+                                    "style": 1,
+                                    "label": "Generate",
+                                    "custom_id": "imagine_generate"
+                                },
+                                {
+                                    "type": 2,
+                                    "style": 2,
+                                    "label": "Cancel",
+                                    "custom_id": "imagine_cancel"
+                                }
+                            ]
+                        }
+                    ]
                 }
-                
-                async with session.post(message_url, headers=headers, json=message_data) as response:
-                    if response.status == 200:
-                        message_data = await response.json()
-                        logger.info(f"✅ Command sent successfully: {message_data['id']}")
-                        return message_data['id']
-                    else:
-                        logger.error(f"❌ Failed to send command: {response.status}")
-                        return None
-                        
+            ]
+            
+            for i, message_data in enumerate(component_formats):
+                try:
+                    async with session.post(message_url, headers=headers, json=message_data) as response:
+                        if response.status == 200:
+                            message_data = await response.json()
+                            logger.info(f"✅ Alternative format {i+1} sent successfully: {message_data['id']}")
+                            return message_data['id']
+                        else:
+                            logger.info(f"❌ Alternative format {i+1} failed: {response.status}")
+                except Exception as e:
+                    logger.error(f"❌ Error with alternative format {i+1}: {e}")
+            
+            return None
+                    
         except Exception as e:
-            logger.error(f"❌ Error sending command: {e}")
+            logger.error(f"❌ Error sending alternative command: {e}")
             return None
     
     async def find_message_with_button(self, channel, session, headers):
@@ -155,41 +256,9 @@ class ButtonClickerBot:
             return False
     
     async def click_button_method_2(self, message, session, headers):
-        """Method 2: Alternative interaction format"""
+        """Method 2: Using actual custom_id from message"""
         try:
-            logger.info("🎯 Method 2: Alternative interaction format")
-            
-            interaction_url = "https://discord.com/api/v10/interactions"
-            
-            interaction_data = {
-                "type": 3,
-                "guild_id": str(message['guild_id']),
-                "channel_id": str(message['channel_id']),
-                "message_id": message['id'],
-                "application_id": "936929561302675456",
-                "session_id": f"click_session_{random.randint(1000, 9999)}",
-                "data": {
-                    "component_type": 2,
-                    "custom_id": "generate"
-                }
-            }
-            
-            async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
-                if response.status == 200:
-                    logger.info("🎉 SUCCESS! Method 2 worked!")
-                    return True
-                else:
-                    logger.info(f"❌ Method 2 failed: {response.status}")
-                    return False
-                    
-        except Exception as e:
-            logger.error(f"❌ Error in method 2: {e}")
-            return False
-    
-    async def click_button_method_3(self, message, session, headers):
-        """Method 3: Using the actual custom_id from the message"""
-        try:
-            logger.info("🎯 Method 3: Using actual custom_id from message")
+            logger.info("🎯 Method 2: Using actual custom_id from message")
             
             # Extract the actual custom_id from the message components
             if message.get('components'):
@@ -216,31 +285,22 @@ class ButtonClickerBot:
                                 
                                 async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
                                     if response.status == 200:
-                                        logger.info(f"🎉 SUCCESS! Method 3 worked with custom_id: {custom_id}")
+                                        logger.info(f"🎉 SUCCESS! Method 2 worked with custom_id: {custom_id}")
                                         return True
                                     else:
-                                        logger.info(f"❌ Method 3 failed with custom_id {custom_id}: {response.status}")
+                                        logger.info(f"❌ Method 2 failed with custom_id {custom_id}: {response.status}")
             
             return False
                     
         except Exception as e:
-            logger.error(f"❌ Error in method 3: {e}")
+            logger.error(f"❌ Error in method 2: {e}")
             return False
     
-    async def click_button_method_4(self, message, session, headers):
-        """Method 4: Simulate user interaction"""
+    async def click_button_method_3(self, message, session, headers):
+        """Method 3: Try multiple custom_id variations"""
         try:
-            logger.info("🎯 Method 4: Simulate user interaction")
+            logger.info("🎯 Method 3: Try multiple custom_id variations")
             
-            # First, send a typing indicator
-            typing_url = f"https://discord.com/api/v10/channels/{message['channel_id']}/typing"
-            async with session.post(typing_url, headers=headers) as response:
-                if response.status == 204:
-                    logger.info("✅ Started typing indicator")
-            
-            await asyncio.sleep(random.uniform(1, 3))
-            
-            # Then try the interaction
             interaction_url = "https://discord.com/api/v10/interactions"
             
             # Try multiple custom_id variations
@@ -262,21 +322,21 @@ class ButtonClickerBot:
                 
                 async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
                     if response.status == 200:
-                        logger.info(f"🎉 SUCCESS! Method 4 worked with custom_id: {custom_id}")
+                        logger.info(f"🎉 SUCCESS! Method 3 worked with custom_id: {custom_id}")
                         return True
                     else:
-                        logger.info(f"❌ Method 4 failed with custom_id {custom_id}: {response.status}")
+                        logger.info(f"❌ Method 3 failed with custom_id {custom_id}: {response.status}")
             
             return False
                     
         except Exception as e:
-            logger.error(f"❌ Error in method 4: {e}")
+            logger.error(f"❌ Error in method 3: {e}")
             return False
     
-    async def execute_button_click_mission(self):
-        """Execute the button clicking mission"""
+    async def execute_complete_mission(self):
+        """Execute the complete mission"""
         try:
-            logger.info("🎯 Starting BUTTON CLICKER mission...")
+            logger.info("🎯 Starting COMPLETE SOLUTION mission...")
             
             # Find target channel
             target_channel = None
@@ -300,12 +360,16 @@ class ButtonClickerBot:
                     "Content-Type": "application/json"
                 }
                 
-                # Step 1: Send the command
-                logger.info("📤 Step 1: Sending command...")
-                message_id = await self.send_command_with_button(target_channel)
+                # Step 1: Send command with interactive components
+                logger.info("📤 Step 1: Sending command with interactive components...")
+                message_id = await self.send_command_with_components(target_channel, session, headers)
                 
                 if not message_id:
-                    logger.error("❌ Failed to send command")
+                    logger.info("🔄 Trying alternative command format...")
+                    message_id = await self.send_alternative_command(target_channel, session, headers)
+                
+                if not message_id:
+                    logger.error("❌ Failed to send command with components")
                     return False
                 
                 # Step 2: Wait for button to appear
@@ -326,8 +390,7 @@ class ButtonClickerBot:
                 methods = [
                     self.click_button_method_1,
                     self.click_button_method_2,
-                    self.click_button_method_3,
-                    self.click_button_method_4
+                    self.click_button_method_3
                 ]
                 
                 for i, method in enumerate(methods, 1):
@@ -359,7 +422,7 @@ class ButtonClickerBot:
             return False
         
         try:
-            logger.info("🚀 Launching BUTTON CLICKER mission...")
+            logger.info("🚀 Launching COMPLETE SOLUTION mission...")
             await self.bot.start(token)
         except Exception as e:
             logger.error(f"❌ Mission failed: {e}")
@@ -367,14 +430,14 @@ class ButtonClickerBot:
 
 async def main():
     """Main entry point"""
-    logger.info("🥷 BUTTON CLICKER BOT - SPECIALIZED FOR GENERATE BUTTON")
+    logger.info("🥷 COMPLETE SOLUTION BOT - CREATES AND CLICKS GENERATE BUTTON")
     logger.info(f"📅 Mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     if os.getenv('GITHUB_ACTIONS'):
         logger.info("☁️ Operating in GitHub Actions environment")
     
-    button_bot = ButtonClickerBot()
-    success = await button_bot.run_mission()
+    complete_bot = CompleteSolutionBot()
+    success = await complete_bot.run_mission()
     
     if success:
         logger.info("✅ MISSION ACCOMPLISHED!")

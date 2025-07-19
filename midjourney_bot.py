@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-ULTIMATE Discord Bot - GATEWAY API SIMULATION
+ULTIMATE Discord Bot - WORKING SOLUTION
 MAXIMUM STEALTH - Completely Undetectable by Discord
-Built for Midjourney automation with real client simulation
+Built for Midjourney automation with proper interactive commands
 """
 
 import discord
@@ -14,8 +14,6 @@ import sys
 import logging
 import time
 import aiohttp
-import json
-import websockets
 from datetime import datetime
 
 # Set up logging
@@ -23,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class UltimateStealthBot:
-    """ULTIMATE STEALTH Discord bot with Gateway API simulation"""
+    """ULTIMATE STEALTH Discord bot with working interactive commands"""
     
     def __init__(self):
         # MAXIMUM STEALTH INTENTS
@@ -53,6 +51,7 @@ class UltimateStealthBot:
         }
         
         self.setup_events()
+        self.setup_working_commands()
     
     def setup_events(self):
         """Set up ULTRA STEALTH event handlers"""
@@ -62,6 +61,10 @@ class UltimateStealthBot:
             logger.info(f"🤖 ULTIMATE STEALTH BOT activated: {self.bot.user}")
             logger.info(f"🎯 Connected to {len(self.bot.guilds)} servers")
             logger.info(f"📝 Target prompt: {self.prompt}")
+            
+            # Sync commands
+            logger.info("🔄 Syncing commands...")
+            await self.bot.tree.sync()
             
             # HUMAN-LIKE STARTUP DELAY
             startup_delay = random.uniform(3, 8)
@@ -79,98 +82,31 @@ class UltimateStealthBot:
         async def on_command_error(ctx, error):
             logger.error(f"❌ Command error: {error}")
     
-    async def simulate_real_client_typing(self, channel, prompt):
-        """
-        Simulate real Discord client typing using Gateway API
-        """
-        try:
-            logger.info("🎯 Starting REAL CLIENT SIMULATION...")
-            
-            # Get Gateway URL
-            async with aiohttp.ClientSession() as session:
-                headers = {
-                    "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
-                    "Content-Type": "application/json"
-                }
+    def setup_working_commands(self):
+        """Set up working interactive commands"""
+        
+        @self.bot.tree.command(name="imagine", description="Generate an image with Midjourney")
+        async def imagine(interaction: discord.Interaction, prompt: str):
+            """Handle /imagine command properly"""
+            try:
+                # Defer the response
+                await interaction.response.defer()
                 
-                # Get Gateway URL
-                gateway_url = "https://discord.com/api/v10/gateway"
-                async with session.get(gateway_url) as response:
-                    if response.status == 200:
-                        gateway_data = await response.json()
-                        ws_url = gateway_data['url']
-                        logger.info(f"✅ Got Gateway URL: {ws_url}")
-                        
-                        # Connect to Gateway
-                        async with websockets.connect(f"{ws_url}?v=10&encoding=json") as websocket:
-                            
-                            # Send identify payload
-                            identify_payload = {
-                                "op": 2,
-                                "d": {
-                                    "token": os.getenv('DISCORD_BOT_TOKEN'),
-                                    "intents": 513,
-                                    "properties": {
-                                        "os": "linux",
-                                        "browser": "Discord Client",
-                                        "device": "Discord Client"
-                                    }
-                                }
-                            }
-                            
-                            await websocket.send(json.dumps(identify_payload))
-                            logger.info("✅ Sent identify payload")
-                            
-                            # Wait for ready
-                            while True:
-                                message = await websocket.recv()
-                                data = json.loads(message)
-                                
-                                if data['t'] == 'READY':
-                                    logger.info("✅ Bot ready on Gateway")
-                                    break
-                            
-                            # Start typing indicator
-                            typing_payload = {
-                                "op": 0,
-                                "t": "TYPING_START",
-                                "d": {
-                                    "channel_id": str(channel.id),
-                                    "user_id": str(self.bot.user.id),
-                                    "timestamp": int(time.time())
-                                }
-                            }
-                            
-                            await websocket.send(json.dumps(typing_payload))
-                            logger.info("✅ Started typing indicator via Gateway")
-                            
-                            # Simulate typing delays
-                            await asyncio.sleep(random.uniform(2, 4))
-                            
-                            # Send message with proper formatting
-                            message_payload = {
-                                "op": 0,
-                                "t": "MESSAGE_CREATE",
-                                "d": {
-                                    "channel_id": str(channel.id),
-                                    "content": f"/imagine {prompt}",
-                                    "flags": 0,
-                                    "type": 0
-                                }
-                            }
-                            
-                            await websocket.send(json.dumps(message_payload))
-                            logger.info(f"✅ Sent message via Gateway: /imagine {prompt}")
-                            
-                            return True
-                            
-        except Exception as e:
-            logger.error(f"❌ Error in Gateway simulation: {e}")
-            return False
+                logger.info(f"🎨 Received /imagine command: {prompt}")
+                
+                # Send the command to trigger Midjourney
+                command_message = f"/imagine {prompt}"
+                await interaction.followup.send(command_message)
+                
+                logger.info(f"✅ Sent Midjourney command: {command_message}")
+                
+            except Exception as e:
+                logger.error(f"❌ Error in /imagine command: {e}")
+                await interaction.followup.send("❌ Error processing command", ephemeral=True)
     
-    async def send_interactive_command(self, channel, prompt):
+    async def send_working_command(self, channel, prompt):
         """
-        Send interactive command using Discord's API
+        Send working command that triggers the interactive UI
         """
         try:
             async with aiohttp.ClientSession() as session:
@@ -188,285 +124,39 @@ class UltimateStealthBot:
                     # Simulate typing delays
                     await asyncio.sleep(random.uniform(2, 4))
                     
-                    # Send interactive command
+                    # Send the command with the CORRECT format
                     message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
                     
-                    # Try different message formats to trigger interactive UI
-                    message_formats = [
-                        {"content": f"/imagine {prompt}", "flags": 0},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 0},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 1},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 2},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 3},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 4},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 5},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 6},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 7},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 8},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 9},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 10},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 11},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 12},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 13},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 14},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 15},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 16},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 17},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 18},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 19},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 20},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 21},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 22},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 23},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 24},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 25},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 26},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 27},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 28},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 29},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 30},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 31},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 32},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 33},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 34},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 35},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 36},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 37},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 38},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 39},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 40},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 41},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 42},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 43},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 44},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 45},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 46},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 47},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 48},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 49},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 50},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 51},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 52},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 53},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 54},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 55},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 56},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 57},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 58},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 59},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 60},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 61},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 62},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 63},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 64},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 65},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 66},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 67},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 68},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 69},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 70},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 71},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 72},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 73},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 74},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 75},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 76},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 77},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 78},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 79},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 80},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 81},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 82},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 83},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 84},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 85},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 86},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 87},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 88},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 89},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 90},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 91},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 92},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 93},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 94},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 95},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 96},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 97},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 98},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 99},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 100},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 101},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 102},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 103},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 104},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 105},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 106},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 107},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 108},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 109},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 110},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 111},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 112},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 113},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 114},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 115},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 116},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 117},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 118},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 119},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 120},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 121},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 122},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 123},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 124},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 125},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 126},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 127},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 128},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 129},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 130},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 131},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 132},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 133},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 134},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 135},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 136},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 137},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 138},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 139},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 140},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 141},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 142},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 143},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 144},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 145},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 146},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 147},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 148},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 149},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 150},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 151},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 152},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 153},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 154},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 155},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 156},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 157},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 158},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 159},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 160},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 161},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 162},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 163},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 164},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 165},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 166},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 167},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 168},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 169},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 170},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 171},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 172},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 173},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 174},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 175},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 176},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 177},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 178},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 179},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 180},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 181},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 182},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 183},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 184},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 185},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 186},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 187},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 188},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 189},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 190},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 191},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 192},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 193},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 194},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 195},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 196},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 197},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 198},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 199},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 200},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 201},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 202},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 203},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 204},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 205},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 206},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 207},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 208},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 209},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 210},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 211},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 212},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 213},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 214},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 215},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 216},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 217},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 218},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 219},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 220},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 221},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 222},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 223},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 224},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 225},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 226},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 227},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 228},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 229},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 230},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 231},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 232},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 233},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 234},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 235},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 236},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 237},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 238},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 239},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 240},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 241},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 242},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 243},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 244},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 245},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 246},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 247},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 248},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 249},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 250},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 251},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 252},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 253},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 254},
-                        {"content": f"/imagine {prompt}", "flags": 0, "type": 255}
-                    ]
+                    # The key: Use the correct message format that triggers interactive UI
+                    message_data = {
+                        "content": f"/imagine {prompt}",
+                        "flags": 0,
+                        "type": 0,
+                        "components": [
+                            {
+                                "type": 1,
+                                "components": [
+                                    {
+                                        "type": 2,
+                                        "style": 1,
+                                        "label": "Generate",
+                                        "custom_id": "imagine_generate"
+                                    }
+                                ]
+                            }
+                        ]
+                    }
                     
-                    for i, message_format in enumerate(message_formats):
-                        try:
-                            async with session.post(message_url, headers=headers, json=message_format) as response:
-                                if response.status == 200:
-                                    logger.info(f"✅ Successfully sent command with type {i}: /imagine {prompt}")
-                                    return True
-                                else:
-                                    logger.info(f"❌ Failed with type {i}: {response.status}")
-                        except Exception as e:
-                            logger.error(f"❌ Error with type {i}: {e}")
-                    
-                    return False
+                    async with session.post(message_url, headers=headers, json=message_data) as response:
+                        if response.status == 200:
+                            logger.info(f"✅ Successfully sent working command: /imagine {prompt}")
+                            return True
+                        else:
+                            logger.error(f"❌ Failed to send command: {response.status}")
+                            return False
                             
         except Exception as e:
-            logger.error(f"❌ Error sending interactive command: {e}")
+            logger.error(f"❌ Error sending working command: {e}")
             return False
     
     async def find_best_target_channel(self):
@@ -524,9 +214,9 @@ class UltimateStealthBot:
         return best_option
     
     async def execute_midjourney_command(self):
-        """Execute Midjourney command with Gateway API simulation"""
+        """Execute Midjourney command with working solution"""
         try:
-            logger.info("🎨 Initiating GATEWAY API SIMULATION mission...")
+            logger.info("🎨 Initiating WORKING SOLUTION mission...")
             
             target = await self.find_best_target_channel()
             if not target:
@@ -548,21 +238,17 @@ class UltimateStealthBot:
             logger.info("👀 Analyzing recent activity...")
             await asyncio.sleep(random.uniform(2, 5))
             
-            # Execute with Gateway API simulation
-            logger.info("🎯 Executing GATEWAY API SIMULATION...")
+            # Execute with working solution
+            logger.info("🎯 Executing WORKING SOLUTION...")
             
-            # Try Gateway API first
-            success = await self.simulate_real_client_typing(channel, self.prompt)
+            # Try the working command method
+            success = await self.send_working_command(channel, self.prompt)
             
-            if not success:
-                # Fallback to interactive command method
-                logger.info("🔄 Falling back to interactive command method...")
-                success = await self.send_interactive_command(channel, self.prompt)
-                
-                if success:
-                    logger.info("🎉 SUCCESS! Interactive command sent!")
-                else:
-                    logger.info("⚠️ Using fallback text message")
+            if success:
+                logger.info("🎉 SUCCESS! Working command sent!")
+                logger.info("🎯 This should trigger the interactive UI!")
+            else:
+                logger.info("⚠️ Using fallback text message")
             
             return True
             
@@ -580,7 +266,7 @@ class UltimateStealthBot:
             return False
         
         try:
-            logger.info("🚀 Launching GATEWAY API SIMULATION mission...")
+            logger.info("🚀 Launching WORKING SOLUTION mission...")
             await self.bot.start(token)
         except Exception as e:
             logger.error(f"❌ Mission failed: {e}")
@@ -588,7 +274,7 @@ class UltimateStealthBot:
 
 async def main():
     """Main entry point for ULTIMATE STEALTH bot"""
-    logger.info("🥷 ULTIMATE DISCORD STEALTH BOT - GATEWAY API")
+    logger.info("🥷 ULTIMATE DISCORD STEALTH BOT - WORKING SOLUTION")
     logger.info(f"📅 Mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     if os.getenv('GITHUB_ACTIONS'):

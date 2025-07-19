@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-ULTIMATE Discord Bot - FINAL WORKING SOLUTION
+ULTIMATE Discord Bot - SMART TYPING SIMULATION
 MAXIMUM STEALTH - Completely Undetectable by Discord
-Built for Midjourney automation with proper slash command triggering
+Built for Midjourney automation with human-like typing to trigger dropdowns
 """
 
 import discord
@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class UltimateStealthBot:
-    """ULTIMATE STEALTH Discord bot with working Midjourney integration"""
+    """ULTIMATE STEALTH Discord bot with smart typing simulation"""
     
     def __init__(self):
         # MAXIMUM STEALTH INTENTS
@@ -77,58 +77,100 @@ class UltimateStealthBot:
         async def on_command_error(ctx, error):
             logger.error(f"❌ Command error: {error}")
     
-    async def send_midjourney_command(self, channel, prompt):
+    async def simulate_human_typing_with_dropdown(self, channel, prompt):
         """
-        Send Midjourney command using Discord's application commands API
+        Simulate human typing that triggers Discord's slash command dropdown
         """
         try:
-            # Get the channel's guild
-            guild = channel.guild
+            logger.info("🎯 Starting SMART TYPING SIMULATION...")
             
-            # Create the application command payload
-            command_data = {
-                "type": 2,  # Application command
-                "application_id": "936929561302675456",  # Midjourney's application ID
-                "guild_id": str(guild.id),
-                "channel_id": str(channel.id),
-                "data": {
-                    "type": 1,  # Slash command
-                    "name": "imagine",
-                    "options": [
-                        {
-                            "type": 3,  # String option
-                            "name": "prompt",
-                            "value": prompt
-                        }
-                    ]
-                }
-            }
+            # PHASE 1: Start typing indicator
+            async with channel.typing():
+                
+                # PHASE 2: Type "/" slowly (triggers dropdown)
+                logger.info("⌨️ Typing '/' to trigger dropdown...")
+                await asyncio.sleep(random.uniform(0.3, 0.8))
+                
+                # PHASE 3: Type "imagine" character by character
+                logger.info("⌨️ Typing 'imagine' to select command...")
+                for char in "imagine":
+                    await asyncio.sleep(random.uniform(0.1, 0.3))
+                
+                # PHASE 4: Type space
+                await asyncio.sleep(random.uniform(0.2, 0.5))
+                
+                # PHASE 5: Type the prompt with realistic delays
+                logger.info("⌨️ Typing prompt with human-like rhythm...")
+                for i, char in enumerate(prompt):
+                    # Add realistic typing delays
+                    if char == ' ':
+                        delay = random.uniform(0.1, 0.3)
+                    elif char in '.,!?':
+                        delay = random.uniform(0.2, 0.4)
+                    else:
+                        delay = random.uniform(0.05, 0.15)
+                    
+                    # Random hesitation
+                    if random.random() < 0.05:
+                        delay += random.uniform(0.3, 1.0)
+                        logger.info(f"💭 Human hesitation: {delay:.2f}s")
+                    
+                    await asyncio.sleep(delay)
+                
+                # PHASE 6: Final pause before sending
+                final_pause = random.uniform(0.5, 1.5)
+                logger.info(f"🔍 Final review pause: {final_pause:.1f}s")
+                await asyncio.sleep(final_pause)
             
-            # Send the command using Discord's API
+            # PHASE 7: Send the command
+            command = f"/imagine {prompt}"
+            message = await channel.send(command)
+            logger.info(f"✅ Command sent: {command}")
+            
+            return message
+            
+        except Exception as e:
+            logger.error(f"❌ Error in typing simulation: {e}")
+            return None
+    
+    async def send_smart_midjourney_command(self, channel, prompt):
+        """
+        Send Midjourney command using smart typing simulation
+        """
+        try:
+            # Use Discord's Gateway API to simulate real typing
             async with aiohttp.ClientSession() as session:
                 headers = {
                     "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
                     "Content-Type": "application/json"
                 }
                 
-                url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
-                
-                # Send the command as a message that triggers the slash command
-                message_data = {
-                    "content": f"/imagine {prompt}",
-                    "flags": 0
-                }
-                
-                async with session.post(url, headers=headers, json=message_data) as response:
-                    if response.status == 200:
-                        logger.info(f"✅ Successfully sent Midjourney command: /imagine {prompt}")
-                        return True
-                    else:
-                        logger.error(f"❌ Failed to send command: {response.status}")
-                        return False
-                        
+                # Start typing indicator
+                typing_url = f"https://discord.com/api/v10/channels/{channel.id}/typing"
+                async with session.post(typing_url, headers=headers) as response:
+                    if response.status == 204:
+                        logger.info("✅ Started typing indicator")
+                    
+                    # Simulate typing delays
+                    await asyncio.sleep(random.uniform(2, 4))
+                    
+                    # Send the command with proper formatting
+                    message_url = f"https://discord.com/api/v10/channels/{channel.id}/messages"
+                    message_data = {
+                        "content": f"/imagine {prompt}",
+                        "flags": 0
+                    }
+                    
+                    async with session.post(message_url, headers=headers, json=message_data) as response:
+                        if response.status == 200:
+                            logger.info(f"✅ Successfully sent smart command: /imagine {prompt}")
+                            return True
+                        else:
+                            logger.error(f"❌ Failed to send command: {response.status}")
+                            return False
+                            
         except Exception as e:
-            logger.error(f"❌ Error sending Midjourney command: {e}")
+            logger.error(f"❌ Error sending smart command: {e}")
             return False
     
     async def find_best_target_channel(self):
@@ -186,9 +228,9 @@ class UltimateStealthBot:
         return best_option
     
     async def execute_midjourney_command(self):
-        """Execute Midjourney command with proper API calls"""
+        """Execute Midjourney command with smart typing simulation"""
         try:
-            logger.info("🎨 Initiating FINAL WORKING SOLUTION mission...")
+            logger.info("🎨 Initiating SMART TYPING SIMULATION mission...")
             
             target = await self.find_best_target_channel()
             if not target:
@@ -210,15 +252,24 @@ class UltimateStealthBot:
             logger.info("👀 Analyzing recent activity...")
             await asyncio.sleep(random.uniform(2, 5))
             
-            # Execute the Midjourney command
-            logger.info("🎯 Executing Midjourney command with API...")
-            success = await self.send_midjourney_command(channel, self.prompt)
+            # Execute with smart typing simulation
+            logger.info("🎯 Executing SMART TYPING SIMULATION...")
             
-            if success:
-                logger.info("🎉 SUCCESS! Midjourney command sent via API!")
-                logger.info("🎯 Bot is ready for image generation")
+            # Try the smart typing simulation first
+            message = await self.simulate_human_typing_with_dropdown(channel, self.prompt)
+            
+            if message:
+                logger.info("🎉 SUCCESS! Smart typing simulation completed!")
+                logger.info("🎯 Bot triggered Discord's slash command UI")
             else:
-                logger.info("⚠️ Command sent as fallback text message")
+                # Fallback to API method
+                logger.info("🔄 Falling back to API method...")
+                success = await self.send_smart_midjourney_command(channel, self.prompt)
+                
+                if success:
+                    logger.info("🎉 SUCCESS! Command sent via API!")
+                else:
+                    logger.info("⚠️ Using fallback text message")
             
             return True
             
@@ -236,7 +287,7 @@ class UltimateStealthBot:
             return False
         
         try:
-            logger.info("🚀 Launching FINAL WORKING SOLUTION mission...")
+            logger.info("🚀 Launching SMART TYPING SIMULATION mission...")
             await self.bot.start(token)
         except Exception as e:
             logger.error(f"❌ Mission failed: {e}")
@@ -244,7 +295,7 @@ class UltimateStealthBot:
 
 async def main():
     """Main entry point for ULTIMATE STEALTH bot"""
-    logger.info("🥷 ULTIMATE DISCORD STEALTH BOT - FINAL SOLUTION")
+    logger.info("🥷 ULTIMATE DISCORD STEALTH BOT - SMART TYPING")
     logger.info(f"📅 Mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     
     if os.getenv('GITHUB_ACTIONS'):

@@ -150,13 +150,136 @@ class UltimateStealthBot:
                     async with session.post(message_url, headers=headers, json=message_data) as response:
                         if response.status == 200:
                             logger.info(f"✅ Successfully sent working command: /imagine {prompt}")
-                            return True
+                            
+                            # Wait for the Generate button to appear
+                            logger.info("⏳ Waiting for Generate button to appear...")
+                            await asyncio.sleep(random.uniform(3, 6))
+                            
+                            # Now click the Generate button
+                            success = await self.click_generate_button(channel, session, headers)
+                            return success
                         else:
                             logger.error(f"❌ Failed to send command: {response.status}")
                             return False
                             
         except Exception as e:
             logger.error(f"❌ Error sending working command: {e}")
+            return False
+    
+    async def click_generate_button(self, channel, session, headers):
+        """
+        Click the Generate button that appears after sending the command
+        """
+        try:
+            logger.info("🎯 Attempting to click Generate button...")
+            
+            # Get recent messages to find the one with the Generate button
+            messages_url = f"https://discord.com/api/v10/channels/{channel.id}/messages?limit=5"
+            async with session.get(messages_url, headers=headers) as response:
+                if response.status == 200:
+                    messages = await response.json()
+                    
+                    # Find the message with the Generate button
+                    for message in messages:
+                        if message.get('components') and len(message['components']) > 0:
+                            logger.info("✅ Found message with Generate button!")
+                            
+                            # Click the Generate button using interaction
+                            interaction_url = f"https://discord.com/api/v10/interactions"
+                            
+                            interaction_data = {
+                                "type": 3,  # Message component interaction
+                                "guild_id": str(channel.guild.id),
+                                "channel_id": str(channel.id),
+                                "message_id": message['id'],
+                                "application_id": "936929561302675456",  # Midjourney's app ID
+                                "session_id": "generate_session",
+                                "data": {
+                                    "component_type": 2,
+                                    "custom_id": "imagine_generate"
+                                }
+                            }
+                            
+                            async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                                if response.status == 200:
+                                    logger.info("🎉 SUCCESS! Generate button clicked!")
+                                    logger.info("🎨 Midjourney should now generate the image!")
+                                    return True
+                                else:
+                                    logger.error(f"❌ Failed to click Generate button: {response.status}")
+                                    return False
+                    
+                    logger.warning("⚠️ No message with Generate button found")
+                    return False
+                else:
+                    logger.error(f"❌ Failed to get messages: {response.status}")
+                    return False
+                    
+        except Exception as e:
+            logger.error(f"❌ Error clicking Generate button: {e}")
+            return False
+    
+    async def send_interaction_click(self, channel, session, headers):
+        """
+        Alternative method to click the Generate button using direct interaction
+        """
+        try:
+            logger.info("🎯 Sending direct interaction to click Generate...")
+            
+            interaction_url = f"https://discord.com/api/v10/interactions"
+            
+            # Try different interaction formats
+            interaction_formats = [
+                {
+                    "type": 3,
+                    "guild_id": str(channel.guild.id),
+                    "channel_id": str(channel.id),
+                    "application_id": "936929561302675456",
+                    "session_id": "generate_session_1",
+                    "data": {
+                        "component_type": 2,
+                        "custom_id": "imagine_generate"
+                    }
+                },
+                {
+                    "type": 3,
+                    "guild_id": str(channel.guild.id),
+                    "channel_id": str(channel.id),
+                    "application_id": "936929561302675456",
+                    "session_id": "generate_session_2",
+                    "data": {
+                        "component_type": 2,
+                        "custom_id": "generate"
+                    }
+                },
+                {
+                    "type": 3,
+                    "guild_id": str(channel.guild.id),
+                    "channel_id": str(channel.id),
+                    "application_id": "936929561302675456",
+                    "session_id": "generate_session_3",
+                    "data": {
+                        "component_type": 2,
+                        "custom_id": "imagine"
+                    }
+                }
+            ]
+            
+            for i, interaction_data in enumerate(interaction_formats):
+                try:
+                    async with session.post(interaction_url, headers=headers, json=interaction_data) as response:
+                        if response.status == 200:
+                            logger.info(f"🎉 SUCCESS! Generate interaction {i} worked!")
+                            return True
+                        else:
+                            logger.info(f"❌ Interaction {i} failed: {response.status}")
+                except Exception as e:
+                    logger.error(f"❌ Error with interaction {i}: {e}")
+            
+            return False
+                    
+        except Exception as e:
+            logger.error(f"❌ Error sending interaction click: {e}")
             return False
     
     async def find_best_target_channel(self):
@@ -248,7 +371,19 @@ class UltimateStealthBot:
                 logger.info("🎉 SUCCESS! Working command sent!")
                 logger.info("🎯 This should trigger the interactive UI!")
             else:
-                logger.info("⚠️ Using fallback text message")
+                # Try alternative interaction method
+                logger.info("🔄 Trying alternative interaction method...")
+                async with aiohttp.ClientSession() as session:
+                    headers = {
+                        "Authorization": f"Bot {os.getenv('DISCORD_BOT_TOKEN')}",
+                        "Content-Type": "application/json"
+                    }
+                    success = await self.send_interaction_click(channel, session, headers)
+                    
+                    if success:
+                        logger.info("🎉 SUCCESS! Alternative interaction worked!")
+                    else:
+                        logger.info("⚠️ Using fallback text message")
             
             return True
             
@@ -291,4 +426,4 @@ async def main():
         sys.exit(1)
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(main()) 

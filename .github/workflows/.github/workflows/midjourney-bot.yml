@@ -9,6 +9,14 @@ on:
         description: 'Midjourney prompt'
         required: true
         default: 'beautiful anime fitness girl doing morning yoga'
+      auto_generate:
+        description: 'Enable continuous generation'
+        required: false
+        default: 'true'
+      generation_interval:
+        description: 'Generation interval in seconds'
+        required: false
+        default: '3600'
 
 jobs:
   discord-bot:
@@ -28,9 +36,12 @@ jobs:
         
     - name: Install dependencies
       run: |
-        # Update pip and install from requirements
+        # Update pip and install required packages
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        pip install discord.py
+        pip install PyNaCl
+        pip install Pillow
+        pip install requests
         echo "📦 Installed packages:"
         pip list
         
@@ -38,9 +49,31 @@ jobs:
       env:
         PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
         DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        AUTO_GENERATE: ${{ github.event.client_payload.auto_generate || github.event.inputs.auto_generate || 'true' }}
+        GENERATION_INTERVAL: ${{ github.event.client_payload.generation_interval || github.event.inputs.generation_interval || '3600' }}
       run: |
         # Run the ultimate stealth Discord bot
         python midjourney_bot.py
+        
+    - name: Upload generated images
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: generated-images
+        path: |
+          generated_image_*.png
+          image_metadata.json
+        retention-days: 30
+        
+    - name: Upload logs
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bot-logs
+        path: |
+          *.log
+          logs/
+        retention-days: 7
         
     - name: Job completed
       if: always()

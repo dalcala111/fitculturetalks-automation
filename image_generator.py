@@ -49,8 +49,24 @@ class SimpleDalleBot:
                 "Content-Type": "application/json"
             }
             
-            # Enhanced prompt for better anime/fitness results
-            enhanced_prompt = f"{self.prompt}, anime style, high quality, detailed, vibrant colors, studio lighting"
+            # Safe prompts that avoid content filter issues
+            safe_prompts = [
+                "serene yoga studio with meditation cushions and plants",
+                "peaceful fitness equipment in a zen garden setting", 
+                "abstract art representing wellness and mindfulness",
+                "minimalist gym interior with natural lighting",
+                "yoga mat surrounded by flowers and candles",
+                "fitness motivation poster with inspiring text",
+                "healthy lifestyle flat lay with fruits and water",
+                "zen meditation space with bamboo and stones"
+            ]
+            
+            # Use provided prompt or fallback to safe alternative
+            if "girl" in self.prompt.lower() or "person" in self.prompt.lower() or "woman" in self.prompt.lower() or "man" in self.prompt.lower():
+                logger.info("⚠️ Detected human reference in prompt, using safe alternative...")
+                enhanced_prompt = random.choice(safe_prompts) + ", high quality, detailed, vibrant colors, professional photography"
+            else:
+                enhanced_prompt = f"{self.prompt}, high quality, detailed, vibrant colors, professional photography"
             
             payload = {
                 "model": "dall-e-3",

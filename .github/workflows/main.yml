@@ -18,6 +18,19 @@ jobs:
       
     - name: Checkout code
       uses: actions/checkout@v4
+
+    - name: Clean Previous Images
+      run: |
+        echo "🧹 Cleaning previous images and artifacts..."
+        rm -f dalle_generation_*.png
+        rm -f dalle_generation_*.jpg
+        rm -f *.png
+        rm -f *.jpg
+        rm -f final_animation.mp4
+        rm -f *.mp4
+        echo "✅ Previous images and videos cleared"
+        echo "📁 Current directory after cleanup:"
+        ls -la
       
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -31,6 +44,16 @@ jobs:
         pip install -r requirements.txt
         echo "📦 Installed packages:"
         pip list
+
+    - name: Debug Prompt Input
+      env:
+        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
+      run: |
+        echo "🔍 Debug: Checking prompt input..."
+        echo "Repository dispatch prompt: ${{ github.event.client_payload.prompt }}"
+        echo "Manual input prompt: ${{ github.event.inputs.prompt }}"
+        echo "Final PROMPT environment variable: $PROMPT"
+        echo "Prompt length: ${#PROMPT}"
         
     - name: Run Ultimate Image Generator
       env:
@@ -38,8 +61,19 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
+        echo "🎨 Generating image with prompt: $PROMPT"
         # Run the ultimate DALL-E image generator
         python image_generator.py
+        
+        # Verify image was created
+        echo "📸 Checking generated images..."
+        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
+          echo "✅ New image generated successfully!"
+          ls -la dalle_generation_*.png
+        else
+          echo "⚠️ No PNG files found, checking for other formats..."
+          ls -la *.jpg *.jpeg 2>/dev/null || echo "❌ No image files found!"
+        fi
 
     # NEW ANIMATION SECTION STARTS HERE
     - name: Install Animation Dependencies
@@ -99,168 +133,4 @@ jobs:
             total_frames = fps * duration
             frames = []
             
-            print(f"🎭 Creating {total_frames} frames for {duration} second animation...")
-            
-            for frame_num in range(total_frames):
-                progress = frame_num / total_frames
-                
-                # Multiple animation effects for engaging content
-                
-                # Effect 1: Gentle breathing/pulsing
-                pulse = 1.0 + np.sin(progress * 6 * np.pi) * 0.03  # Subtle pulse
-                
-                # Effect 2: Slow rotation for dynamic feel
-                angle = np.sin(progress * 2 * np.pi) * 1.5  # Gentle sway
-                
-                # Effect 3: Slow zoom for cinematic effect
-                zoom = 1.0 + np.sin(progress * np.pi) * 0.05  # Slow zoom in/out
-                
-                # Combine effects
-                scale_factor = pulse * zoom
-                
-                # Get transformation matrix
-                center = (target_width // 2, target_height // 2)
-                rotation_matrix = cv2.getRotationMatrix2D(center, angle, scale_factor)
-                
-                # Apply transformation
-                frame = cv2.warpAffine(canvas, rotation_matrix, (target_width, target_height))
-                
-                # Effect 4: Subtle color enhancement for anime/fitness theme
-                # Enhance saturation slightly for more vibrant look
-                hsv = cv2.cvtColor(frame, cv2.COLOR_BGR2HSV)
-                hsv[:, :, 1] = cv2.multiply(hsv[:, :, 1], 1.1)  # Increase saturation
-                frame = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-                
-                # Convert BGR to RGB for imageio
-                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frames.append(frame_rgb)
-                
-                if frame_num % 60 == 0:
-                    print(f"⏳ Generated frame {frame_num}/{total_frames}")
-            
-            # Save as high-quality MP4
-            print("💾 Saving animation...")
-            imageio.mimsave(output_path, frames, fps=fps, quality=9, macro_block_size=1)
-            print(f"✅ Animation saved as {output_path}")
-            
-            return True
-
-        def main():
-            print("🔍 Looking for DALL-E generated images...")
-            
-            # Find DALL-E generated images
-            image_patterns = [
-                "dalle_generation_*.png",
-                "dalle_generation_*.jpg",
-                "*.png",
-                "*.jpg"
-            ]
-            
-            image_files = []
-            for pattern in image_patterns:
-                found_files = glob.glob(pattern)
-                if found_files:
-                    image_files.extend(found_files)
-                    break
-            
-            if not image_files:
-                print("❌ No image files found!")
-                print("📁 Current directory contents:")
-                for item in os.listdir("."):
-                    print(f"  - {item}")
-                return False
-                
-            # Use the first (most recent) image
-            image_path = image_files[0]
-            print(f"🖼️  Using image: {image_path}")
-            
-            # Create animation
-            success = create_social_media_animation(image_path)
-            
-            if success:
-                print("🎉 Animation created successfully!")
-                # Check file size
-                if os.path.exists("final_animation.mp4"):
-                    size = os.path.getsize("final_animation.mp4") / (1024*1024)
-                    print(f"📊 Final animation size: {size:.2f} MB")
-                    print("🚀 Ready for TikTok and YouTube Shorts!")
-            else:
-                print("❌ Failed to create animation")
-                
-            return success
-
-        if __name__ == "__main__":
-            main()
-        EOF
-
-    - name: Generate Animation
-      run: |
-        echo "🎬 Starting animation generation..."
-        python animate_image.py
-
-    - name: Verify Animation Output
-      run: |
-        if [ -f "final_animation.mp4" ]; then
-          echo "✅ Animation file created successfully!"
-          ls -lh final_animation.mp4
-          
-          # Install ffmpeg for video analysis
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          
-          echo "📹 Video information:"
-          ffprobe -v quiet -print_format json -show_format -show_streams final_animation.mp4 | jq '.format.duration, .streams[0].width, .streams[0].height, .streams[0].avg_frame_rate'
-        else
-          echo "❌ Animation file not found!"
-          echo "📁 Current directory contents:"
-          ls -la
-          exit 1
-        fi
-        
-    - name: Upload generated images
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: generated-images
-        path: "dalle_generation_*.png"
-        retention-days: 30
-
-    # NEW: Upload the animated video
-    - name: Upload animated video
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: animated-video
-        path: "final_animation.mp4"
-        retention-days: 30
-        
-    - name: Create Workflow Summary
-      if: always()
-      run: |
-        echo "## 🎬 Ultimate Image Generator + Animation Complete!" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📊 Generated Content:" >> $GITHUB_STEP_SUMMARY
-        
-        # Check for images
-        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
-          echo "- ✅ **DALL-E Image:** $(ls dalle_generation_*.png | head -1)" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- ❌ **DALL-E Image:** Not found" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        # Check for animation
-        if [ -f "final_animation.mp4" ]; then
-          echo "- ✅ **Animation:** final_animation.mp4" >> $GITHUB_STEP_SUMMARY
-          echo "- 📏 **Format:** 1080x1920 (9:16 aspect ratio)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** 8 seconds" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎯 **Perfect for:** TikTok & YouTube Shorts" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- ❌ **Animation:** Not created" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Ready for Social Media!" >> $GITHUB_STEP_SUMMARY
-        echo "Both your static image and animated video are ready for upload!" >> $GITHUB_STEP_SUMMARY
-        
-    - name: Job completed
-      if: always()
-      run: echo "✅ Ultimate Image Generator + Animation mission completed"
+            print(f"🎭 Creating {total_

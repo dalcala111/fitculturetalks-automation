@@ -1,4 +1,4 @@
-name: "Ultimate Discord Bot Automation"
+name: "Ultimate Image Generator Automation"
 
 on:
   repository_dispatch:
@@ -6,17 +6,17 @@ on:
   workflow_dispatch:
     inputs:
       prompt:
-        description: 'Midjourney prompt'
+        description: 'Image generation prompt'
         required: true
         default: 'beautiful anime fitness girl doing morning yoga'
 
 jobs:
-  discord-bot:
+  image-generator:
     runs-on: ubuntu-latest
     
     steps:
     - name: Set up job
-      run: echo "🚀 Starting Ultimate Discord Bot mission"
+      run: echo "🚀 Starting Ultimate Image Generator mission"
       
     - name: Checkout code
       uses: actions/checkout@v4
@@ -28,18 +28,29 @@ jobs:
         
     - name: Install dependencies
       run: |
+        # Update pip and install from requirements
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         echo "📦 Installed packages:"
         pip list
         
-    - name: Run Ultimate Discord Bot
+    - name: Run Ultimate Image Generator
       env:
         PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
-        DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
-        python midjourney_bot.py
+        # Run the ultimate DALL-E image generator
+        python image_generator.py
+        
+    - name: Upload generated images
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: generated-images
+        path: "dalle_generation_*.png"
+        retention-days: 30
         
     - name: Job completed
       if: always()
-      run: echo "✅ Ultimate Discord Bot mission completed"
+      run: echo "✅ Ultimate Image Generator mission completed"

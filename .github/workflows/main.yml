@@ -1,7 +1,7 @@
 name: "Ultimate Image Generator Automation"
 on:
   repository_dispatch:
-    types: [trigger-midjourney]
+    types: [trigger-midjourney, create-masterpiece]
   workflow_dispatch:
     inputs:
       prompt:
@@ -28,6 +28,8 @@ jobs:
         rm -f *.jpg
         rm -f final_animation.mp4
         rm -f *.mp4
+        rm -f *.mp3
+        rm -f *.wav
         echo "✅ Previous images and videos cleared"
         echo "📁 Current directory after cleanup:"
         ls -la
@@ -75,7 +77,7 @@ jobs:
           ls -la *.jpg *.jpeg 2>/dev/null || echo "❌ No image files found!"
         fi
 
-    # NEW ANIMATION SECTION STARTS HERE
+    # ANIMATION SECTION
     - name: Install Animation Dependencies
       run: |
         pip install opencv-python pillow numpy imageio imageio-ffmpeg
@@ -249,7 +251,234 @@ jobs:
           ls -la
           exit 1
         fi
+
+    # ADVANCED VIDEO POST-PRODUCTION
+    - name: Install Video Processing Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
         
+        # Install additional fonts for better text rendering
+        sudo apt-get install -y fonts-liberation fonts-open-sans
+        
+        echo "🎬 Video processing environment ready!"
+
+    - name: Create Advanced Video Editor Script
+      run: |
+        cat > advanced_video_editor.py << 'EOF'
+        import subprocess
+        import os
+        import json
+        import sys
+        from pathlib import Path
+
+        class TikTokVideoProcessor:
+            def __init__(self):
+                self.video_file = "final_animation.mp4"
+                self.audio_file = None
+                self.recipe_text = ""
+                self.output_file = "tiktok_masterpiece.mp4"
+                
+            def find_files(self):
+                """Find all necessary files for video processing"""
+                print("🔍 Searching for video and audio files...")
+                
+                # Find animated video
+                if not os.path.exists(self.video_file):
+                    print("❌ Animated video not found!")
+                    return False
+                    
+                # Check for voice audio (will be uploaded by n8n)
+                audio_files = [f for f in os.listdir(".") if f.endswith(('.mp3', '.wav', '.m4a'))]
+                if audio_files:
+                    self.audio_file = audio_files[0]
+                    print(f"🎤 Found audio: {self.audio_file}")
+                else:
+                    print("⚠️ No audio file found, creating video without voice-over")
+                
+                print(f"📹 Video: {self.video_file}")
+                return True
+                
+            def get_recipe_text(self):
+                """Extract recipe text for overlay"""
+                # Get recipe text from GitHub Actions environment
+                recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
+                if recipe_from_payload:
+                    self.recipe_text = recipe_from_payload
+                else:
+                    self.recipe_text = "Amazing Food Recipe! Follow along for the best results!"
+                print(f"📝 Recipe text: {self.recipe_text[:50]}...")
+                
+            def create_text_overlay(self):
+                """Create stylized text overlay for TikTok"""
+                # Split text into multiple lines for better readability
+                words = self.recipe_text.split()
+                lines = []
+                current_line = ""
+                
+                for word in words:
+                    if len(current_line + " " + word) <= 35:  # Optimal line length
+                        current_line += " " + word if current_line else word
+                    else:
+                        lines.append(current_line)
+                        current_line = word
+                        
+                if current_line:
+                    lines.append(current_line)
+                
+                # Limit to 4 lines for mobile viewing
+                formatted_text = "\\n".join(lines[:4])
+                
+                return formatted_text
+                
+            def create_professional_video(self):
+                """Create professional-quality TikTok video with advanced effects"""
+                print("🎬 Creating professional TikTok video...")
+                
+                formatted_text = self.create_text_overlay()
+                
+                # Advanced FFmpeg command with professional styling
+                base_cmd = [
+                    'ffmpeg', '-y',
+                    '-i', self.video_file
+                ]
+                
+                # Add audio if available
+                if self.audio_file:
+                    base_cmd.extend(['-i', self.audio_file])
+                
+                # Create sophisticated filter complex
+                filter_parts = []
+                
+                # Video scaling and effects
+                filter_parts.append(
+                    "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,"
+                    "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=black@1.0,"
+                    "eq=brightness=0.05:contrast=1.1[scaled]"
+                )
+                
+                # Advanced text overlay with shadow and styling
+                text_filter = (
+                    f"[scaled]drawtext="
+                    f"text='{formatted_text}':"
+                    f"fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:"
+                    f"fontsize=36:"
+                    f"fontcolor=white:"
+                    f"x=(w-text_w)/2:"
+                    f"y=h-200:"
+                    f"box=1:"
+                    f"boxcolor=black@0.8:"
+                    f"boxborderw=8:"
+                    f"shadowcolor=black@0.7:"
+                    f"shadowx=2:"
+                    f"shadowy=2[texted]"
+                )
+                filter_parts.append(text_filter)
+                
+                # Combine filters
+                filter_complex = ";".join(filter_parts)
+                
+                base_cmd.extend([
+                    '-filter_complex', filter_complex,
+                    '-map', '[texted]'
+                ])
+                
+                # Audio mapping
+                if self.audio_file:
+                    base_cmd.extend(['-map', '1:a'])
+                    
+                # Professional encoding settings
+                base_cmd.extend([
+                    '-c:v', 'libx264',
+                    '-preset', 'medium',
+                    '-crf', '23',
+                    '-c:a', 'aac',
+                    '-b:a', '128k',
+                    '-r', '30',
+                    '-shortest' if self.audio_file else '-t', '8',
+                    self.output_file
+                ])
+                
+                try:
+                    print("🚀 Executing advanced video processing...")
+                    result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
+                    
+                    if result.returncode == 0:
+                        print("✅ Professional video created successfully!")
+                        self.analyze_output()
+                        return True
+                    else:
+                        print(f"❌ FFmpeg error: {result.stderr}")
+                        return False
+                        
+                except subprocess.TimeoutExpired:
+                    print("❌ Video processing timed out")
+                    return False
+                except Exception as e:
+                    print(f"❌ Unexpected error: {e}")
+                    return False
+                    
+            def analyze_output(self):
+                """Analyze the created video"""
+                if not os.path.exists(self.output_file):
+                    return
+                    
+                # Get video info
+                info_cmd = [
+                    'ffprobe', '-v', 'quiet', '-print_format', 'json',
+                    '-show_format', '-show_streams', self.output_file
+                ]
+                
+                try:
+                    result = subprocess.run(info_cmd, capture_output=True, text=True)
+                    if result.returncode == 0:
+                        info = json.loads(result.stdout)
+                        duration = float(info['format']['duration'])
+                        size_mb = os.path.getsize(self.output_file) / (1024*1024)
+                        
+                        print(f"📊 Video Analysis:")
+                        print(f"   Duration: {duration:.1f} seconds")
+                        print(f"   File Size: {size_mb:.1f} MB")
+                        print(f"   Format: MP4 (1080x1920)")
+                        print(f"   Status: Ready for TikTok/YouTube Shorts! 🚀")
+                        
+                except Exception as e:
+                    print(f"⚠️ Could not analyze video: {e}")
+                    
+            def process_video(self):
+                """Main processing pipeline"""
+                print("🎬 STARTING ADVANCED VIDEO PROCESSING PIPELINE")
+                print("=" * 50)
+                
+                if not self.find_files():
+                    return False
+                    
+                self.get_recipe_text()
+                
+                success = self.create_professional_video()
+                
+                if success:
+                    print("🎉 TIKTOK MASTERPIECE CREATED!")
+                    print(f"📱 File: {self.output_file}")
+                    return True
+                else:
+                    print("❌ Video processing failed")
+                    return False
+
+        # Execute the video processor
+        if __name__ == "__main__":
+            processor = TikTokVideoProcessor()
+            success = processor.process_video()
+            sys.exit(0 if success else 1)
+        EOF
+
+    - name: Execute Advanced Video Processing
+      env:
+        RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
+      run: |
+        echo "🎬 Launching advanced video processing..."
+        python3 advanced_video_editor.py
+
     - name: Upload generated images
       if: always()
       uses: actions/upload-artifact@v4
@@ -258,7 +487,6 @@ jobs:
         path: "dalle_generation_*.png"
         retention-days: 30
 
-    # NEW: Upload the animated video
     - name: Upload animated video
       if: always()
       uses: actions/upload-artifact@v4
@@ -266,43 +494,45 @@ jobs:
         name: animated-video
         path: "final_animation.mp4"
         retention-days: 30
-        
-    - name: Create Workflow Summary
+
+    - name: Upload TikTok Masterpiece
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: tiktok-masterpiece
+        path: |
+          tiktok_masterpiece.mp4
+          final_animation.mp4
+          *.mp3
+          *.wav
+        retention-days: 30
+
+    - name: Create Epic Summary
       if: always()
       run: |
-        echo "## 🎬 Ultimate Image Generator + Animation Complete!" >> $GITHUB_STEP_SUMMARY
+        echo "## 🎬 TIKTOK MASTERPIECE GENERATED! 🔥" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 📊 Generated Content:" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Your Complete Content Package:" >> $GITHUB_STEP_SUMMARY
         
-        # Check for images
-        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
-          echo "- ✅ **DALL-E Image:** $(ls dalle_generation_*.png | head -1)" >> $GITHUB_STEP_SUMMARY
-          
-          # Get image file size
-          IMAGE_SIZE=$(du -h $(ls dalle_generation_*.png | head -1) | cut -f1)
-          echo "- 📏 **Image Size:** $IMAGE_SIZE" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- ❌ **DALL-E Image:** Not found" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        # Check for animation
-        if [ -f "final_animation.mp4" ]; then
-          echo "- ✅ **Animation:** final_animation.mp4" >> $GITHUB_STEP_SUMMARY
-          echo "- 📏 **Format:** 1080x1920 (9:16 aspect ratio)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** 8 seconds" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎯 **Perfect for:** TikTok & YouTube Shorts" >> $GITHUB_STEP_SUMMARY
-          
-          # Get video file size
-          VIDEO_SIZE=$(du -h final_animation.mp4 | cut -f1)
-          echo "- 💾 **Video Size:** $VIDEO_SIZE" >> $GITHUB_STEP_SUMMARY
-        else
-          echo "- ❌ **Animation:** Not created" >> $GITHUB_STEP_SUMMARY
+        if [ -f "tiktok_masterpiece.mp4" ]; then
+          VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
+          echo "- 🎥 **TikTok Ready Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ **Duration:** ~8 seconds (Optimal for engagement)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎤 **Audio:** Professional AI voice-over" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 **Text:** Recipe overlay with advanced styling" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Animation:** Food visuals with perfect effects" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🍽️ Content Type: Trending Food Photography" >> $GITHUB_STEP_SUMMARY
-        echo "Both your food image and animated video are ready for social media upload!" >> $GITHUB_STEP_SUMMARY
-        
+        echo "### 🎯 Ready to Go Viral!" >> $GITHUB_STEP_SUMMARY
+        echo "Your professional-grade content is ready for:" >> $GITHUB_STEP_SUMMARY
+        echo "- TikTok (optimized for algorithm)" >> $GITHUB_STEP_SUMMARY
+        echo "- YouTube Shorts (perfect format)" >> $GITHUB_STEP_SUMMARY
+        echo "- Instagram Reels (premium quality)" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**🔥 AUTOMATION LEVEL: EXPERT 🔥**" >> $GITHUB_STEP_SUMMARY
+
     - name: Job completed
       if: always()
-      run: echo "✅ Ultimate Image Generator + Animation mission completed"
+      run: echo "✅ Ultimate Content Creation mission completed"

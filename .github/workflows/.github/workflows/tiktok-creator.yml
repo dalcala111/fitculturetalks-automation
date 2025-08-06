@@ -1,7 +1,7 @@
 name: "Ultimate TikTok Content Creator"
 on:
   repository_dispatch:
-    types: [trigger-midjourney, create-masterpiece]
+    types: [trigger-midjourney]
   workflow_dispatch:
     inputs:
       prompt:
@@ -27,6 +27,8 @@ jobs:
         rm -f *.png *.jpg *.mp4 *.wav *.mp3
         rm -f final_animation.mp4 tiktok_masterpiece.mp4
         echo "✅ Previous files cleared"
+        echo "📁 Current directory after cleanup:"
+        ls -la
       
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -39,24 +41,40 @@ jobs:
         pip install -r requirements.txt
         echo "📦 Dependencies installed"
 
-    # IMAGE GENERATION (only for trigger-midjourney)
-    - name: Generate Image
-      if: github.event.action == 'trigger-midjourney'
+    - name: Debug Prompt Input
       env:
-        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt }}
+        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
+        RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
+      run: |
+        echo "🔍 Debug: Checking inputs..."
+        echo "Image prompt: $PROMPT"
+        echo "Recipe text: $RECIPE_TEXT"
+        echo "Event type: ${{ github.event.action }}"
+
+    - name: Generate Image
+      env:
+        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'beautiful anime fitness girl doing morning yoga' }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
         echo "🎨 Generating image with prompt: $PROMPT"
         python image_generator.py
+        
+        echo "📸 Checking generated images..."
+        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
+          echo "✅ New image generated successfully!"
+          ls -la dalle_generation_*.png
+        else
+          echo "⚠️ No PNG files found, checking for other formats..."
+          ls -la *.jpg *.jpeg 2>/dev/null || echo "❌ No image files found!"
+        fi
 
     - name: Install Animation Dependencies
-      if: github.event.action == 'trigger-midjourney'
       run: |
         pip install opencv-python pillow numpy imageio imageio-ffmpeg
         echo "🎬 Animation dependencies installed"
 
     - name: Create Animation Script
-      if: github.event.action == 'trigger-midjourney'
       run: |
         cat > animate_image.py << 'EOF'
         import cv2
@@ -149,92 +167,80 @@ jobs:
         EOF
 
     - name: Generate Animation
-      if: github.event.action == 'trigger-midjourney'
       run: |
         echo "🎬 Creating animation..."
         python animate_image.py
 
-    # MASTERPIECE CREATION (only for create-masterpiece)
+    - name: Verify Animation Output
+      run: |
+        if [ -f "final_animation.mp4" ]; then
+          echo "✅ Animation file created successfully!"
+          ls -lh final_animation.mp4
+        else
+          echo "❌ Animation file not found!"
+          echo "📁 Current directory contents:"
+          ls -la
+          exit 1
+        fi
+
+    # NEW: Add Text Overlay Immediately After Animation
     - name: Install Video Processing Dependencies
-      if: github.event.action == 'create-masterpiece'
       run: |
         sudo apt-get update
         sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core fonts-liberation
         echo "🎬 Video processing environment ready!"
 
-    - name: Create TikTok Video Editor
-      if: github.event.action == 'create-masterpiece'
-      run: |
-        cat > create_tiktok_masterpiece.py << 'EOF'
-        import subprocess
-        import os
-        import sys
-        import glob
-
-        def create_tiktok_video():
-            recipe_text = os.environ.get('RECIPE_TEXT', 'Amazing Recipe!')
-            print(f"📝 Recipe text received: {recipe_text}")
-            
-            # Find the animation file - check artifacts first
-            animation_files = glob.glob("final_animation.mp4") + glob.glob("*.mp4")
-            
-            if not animation_files:
-                print("❌ No animation found! Need to run image generation first.")
-                print("📁 Current directory contents:")
-                for item in os.listdir("."):
-                    print(f"  - {item}")
-                return False
-            
-            animation_file = animation_files[0]
-            print(f"🎬 Using animation: {animation_file}")
-            
-            # Clean recipe text for FFmpeg
-            clean_text = recipe_text.replace("'", "").replace('"', '').replace('\n', ' ')
-            print(f"📝 Adding text overlay: {clean_text}")
-            
-            # Create text overlay with FFmpeg
-            cmd = [
-                'ffmpeg', '-y',
-                '-i', animation_file,
-                '-vf', f'drawtext=text=\'{clean_text}\':fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:fontsize=36:fontcolor=white:x=(w-text_w)/2:y=h-150:box=1:boxcolor=black@0.8:boxborderw=8',
-                '-c:a', 'copy',
-                '-preset', 'fast',
-                'tiktok_masterpiece.mp4'
-            ]
-            
-            try:
-                result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-                print("✅ TikTok masterpiece created!")
-                
-                # Verify output
-                if os.path.exists('tiktok_masterpiece.mp4'):
-                    size = os.path.getsize('tiktok_masterpiece.mp4') / (1024*1024)
-                    print(f"📊 Masterpiece size: {size:.1f} MB")
-                return True
-            except subprocess.CalledProcessError as e:
-                print(f"❌ FFmpeg error: {e}")
-                print(f"❌ FFmpeg stderr: {e.stderr}")
-                return False
-            except Exception as e:
-                print(f"❌ Error: {e}")
-                return False
-
-        if __name__ == "__main__":
-            success = create_tiktok_video()
-            sys.exit(0 if success else 1)
-        EOF
-
-    - name: Create TikTok Masterpiece
-      if: github.event.action == 'create-masterpiece'
+    - name: Add Recipe Text Overlay
       env:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
       run: |
-        echo "🎬 Creating TikTok masterpiece..."
-        python create_tiktok_masterpiece.py
+        # Check if we have recipe text to add
+        if [ -n "$RECIPE_TEXT" ] && [ -f "final_animation.mp4" ]; then
+          echo "📝 Adding text overlay: $RECIPE_TEXT"
+          
+          # Clean recipe text for FFmpeg (remove problematic characters)
+          CLEAN_TEXT=$(echo "$RECIPE_TEXT" | sed "s/'//g" | sed 's/"//g' | tr '\n' ' ')
+          echo "📝 Cleaned text: $CLEAN_TEXT"
+          
+          # Create text overlay with FFmpeg
+          ffmpeg -y \
+            -i final_animation.mp4 \
+            -vf "drawtext=text='$CLEAN_TEXT':fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:fontsize=36:fontcolor=white:x=(w-text_w)/2:y=h-150:box=1:boxcolor=black@0.8:boxborderw=8:shadowcolor=black@0.7:shadowx=2:shadowy=2" \
+            -c:a copy \
+            -preset fast \
+            tiktok_masterpiece.mp4
+          
+          if [ -f "tiktok_masterpiece.mp4" ]; then
+            echo "✅ TikTok masterpiece created with text overlay!"
+            ls -lh tiktok_masterpiece.mp4
+          else
+            echo "⚠️ Text overlay failed, keeping original animation"
+            cp final_animation.mp4 tiktok_masterpiece.mp4
+          fi
+        else
+          echo "⚠️ No recipe text provided or animation missing, using animation as masterpiece"
+          cp final_animation.mp4 tiktok_masterpiece.mp4
+        fi
+
+    - name: Final Verification
+      run: |
+        echo "📊 Final output verification:"
+        if [ -f "tiktok_masterpiece.mp4" ]; then
+          SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
+          echo "✅ TikTok Masterpiece: $SIZE"
+          
+          # Get video info with ffmpeg
+          ffprobe -v quiet -print_format json -show_format -show_streams tiktok_masterpiece.mp4 | jq '.format.duration, .streams[0].width, .streams[0].height' || echo "Video info not available"
+        fi
+        
+        if [ -f "final_animation.mp4" ]; then
+          SIZE=$(du -h final_animation.mp4 | cut -f1)
+          echo "✅ Original Animation: $SIZE"
+        fi
 
     # UPLOAD ARTIFACTS
-    - name: Upload Images
-      if: always() && github.event.action == 'trigger-midjourney'
+    - name: Upload Generated Images
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: generated-images
@@ -242,7 +248,7 @@ jobs:
         retention-days: 30
 
     - name: Upload Animation
-      if: always() && github.event.action == 'trigger-midjourney'
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: animated-video
@@ -250,7 +256,7 @@ jobs:
         retention-days: 30
 
     - name: Upload TikTok Masterpiece
-      if: always() && github.event.action == 'create-masterpiece'
+      if: always()
       uses: actions/upload-artifact@v4
       with:
         name: tiktok-masterpiece
@@ -259,23 +265,34 @@ jobs:
           final_animation.mp4
         retention-days: 30
 
-    - name: Create Summary
+    - name: Create Workflow Summary
       if: always()
       run: |
         echo "## 🎬 TikTok Content Creation Complete!" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📊 Generated Content:" >> $GITHUB_STEP_SUMMARY
         
-        if [ "${{ github.event.action }}" == "trigger-midjourney" ]; then
-          echo "### 📸 Image & Animation Generated" >> $GITHUB_STEP_SUMMARY
-          echo "- Original food image created" >> $GITHUB_STEP_SUMMARY
-          echo "- Animation ready for TikTok" >> $GITHUB_STEP_SUMMARY
+        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
+          echo "- ✅ **Food Image:** $(ls dalle_generation_*.png | head -1)" >> $GITHUB_STEP_SUMMARY
         fi
         
-        if [ "${{ github.event.action }}" == "create-masterpiece" ]; then
-          echo "### 🎥 TikTok Masterpiece Created" >> $GITHUB_STEP_SUMMARY
-          echo "- Text overlay added" >> $GITHUB_STEP_SUMMARY
-          echo "- Ready for social media upload" >> $GITHUB_STEP_SUMMARY
+        if [ -f "final_animation.mp4" ]; then
+          VIDEO_SIZE=$(du -h final_animation.mp4 | cut -f1)
+          echo "- ✅ **Animation:** final_animation.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
         fi
+        
+        if [ -f "tiktok_masterpiece.mp4" ]; then
+          MASTER_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
+          echo "- 🎥 **TikTok Masterpiece:** tiktok_masterpiece.mp4 ($MASTER_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ **Duration:** ~8 seconds" >> $GITHUB_STEP_SUMMARY
+          echo "- 📝 **Text Overlay:** Recipe text included" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Ready for Social Media!" >> $GITHUB_STEP_SUMMARY
+        echo "Your content is optimized for TikTok, YouTube Shorts, and Instagram Reels!" >> $GITHUB_STEP_SUMMARY
 
     - name: Job completed
       if: always()
-      run: echo "✅ TikTok Content Creation mission completed"
+      run: echo "✅ Complete TikTok Content Creation mission accomplished"

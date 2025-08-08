@@ -1,7 +1,7 @@
 name: "Ultimate Image Generator Automation"
 on:
   repository_dispatch:
-    types: [trigger-midjourney, create-masterpiece]
+    types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video]
   workflow_dispatch:
     inputs:
       prompt:

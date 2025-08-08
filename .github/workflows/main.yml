@@ -1,743 +1,413 @@
-name: "Ultimate Shih Tzu Food Animation Generator"
-on:
-  repository_dispatch:
-    types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video]
-  workflow_dispatch:
-    inputs:
-      prompt:
-        description: 'Image generation prompt'
-        required: true
-        default: 'adorable Shih Tzu with delicious trending food dish'
-      animation_type:
-        description: 'Animation type (emergence, eating, dancing)'
-        required: false
-        default: 'eating'
-jobs:
-  shih-tzu-generator:
-    runs-on: ubuntu-latest
+import cv2
+import numpy as np
+from PIL import Image, ImageDraw, ImageFont
+import os
+import imageio
+import glob
+import random
+
+def create_dynamic_shih_tzu_animation(image_path, animation_type="eating", output_path="final_animation.mp4"):
+    """
+    Create dynamic Shih Tzu animations with simulated movement
+    """
+    print(f"🐕 Creating DYNAMIC Shih Tzu {animation_type} animation from: {image_path}")
     
-    steps:
-    - name: Set up job
-      run: echo "🐕 Starting Ultimate Shih Tzu Food Animation mission"
-      
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Clean Previous Files
-      run: |
-        echo "🧹 Cleaning previous images and artifacts..."
-        rm -f dalle_generation_*.png
-        rm -f dalle_generation_*.jpg
-        rm -f *.png
-        rm -f *.jpg
-        rm -f final_animation.mp4
-        rm -f *.mp4
-        rm -f *.mp3
-        rm -f *.wav
-        echo "✅ Previous files cleared"
-        echo "📁 Current directory after cleanup:"
-        ls -la
-      
-    - name: Setup Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+    # Load the image
+    img = cv2.imread(image_path)
+    if img is None:
+        print(f"❌ Could not load image: {image_path}")
+        return False
         
-    - name: Install dependencies
-      run: |
-        # Update pip and install from requirements
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        echo "📦 Installed packages:"
-        pip list
-
-    - name: Debug Prompt Input
-      env:
-        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
-      run: |
-        echo "🔍 Debug: Checking inputs..."
-        echo "Repository dispatch prompt: ${{ github.event.client_payload.prompt }}"
-        echo "Manual input prompt: ${{ github.event.inputs.prompt }}"
-        echo "Final PROMPT: $PROMPT"
-        echo "Animation type: $ANIMATION_TYPE"
-        echo "Content category: ${{ github.event.client_payload.content_category }}"
+    height, width = img.shape[:2]
+    print(f"📏 Original image size: {width}x{height}")
+    
+    # Social media format
+    target_width = 1080
+    target_height = 1920
+    
+    # Scale and prepare base image
+    scale = min(target_width/width, target_height/height) * 0.85
+    new_width = int(width * scale)
+    new_height = int(height * scale)
+    img_resized = cv2.resize(img, (new_width, new_height))
+    
+    # Animation parameters
+    fps = 30
+    duration = 8
+    total_frames = fps * duration
+    frames = []
+    
+    print(f"🎭 Creating {total_frames} frames with DYNAMIC movement...")
+    
+    for frame_num in range(total_frames):
+        progress = frame_num / total_frames
         
-    - name: Run Enhanced Image Generator
-      env:
-        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
-        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
-      run: |
-        echo "🎨 Generating Shih Tzu food image with prompt: $PROMPT"
-        # Run the ultimate DALL-E image generator
-        python image_generator.py
+        # Create dynamic background
+        background = create_animated_background(target_height, target_width, progress)
         
-        # Verify image was created
-        echo "📸 Checking generated images..."
-        if ls dalle_generation_*.png 1> /dev/null 2>&1; then
-          echo "✅ New Shih Tzu image generated successfully!"
-          ls -la dalle_generation_*.png
-        else
-          echo "⚠️ No PNG files found, checking for other formats..."
-          ls -la *.jpg *.jpeg 2>/dev/null || echo "❌ No image files found!"
-        fi
+        # Apply dynamic animation based on type
+        if animation_type == 'emergence':
+            frame = create_magical_emergence(background, img_resized, progress, target_width, target_height)
+        elif animation_type == 'dancing':
+            frame = create_bouncy_dance(background, img_resized, progress, target_width, target_height)
+        else:  # eating
+            frame = create_eating_motion(background, img_resized, progress, target_width, target_height)
+        
+        # Add floating particles and effects
+        frame = add_floating_particles(frame, animation_type, progress)
+        
+        # Add dynamic text with animation
+        frame = add_dynamic_text(frame, animation_type, progress)
+        
+        # Convert and store
+        frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        frames.append(frame_rgb)
+        
+        if frame_num % 30 == 0:
+            print(f"⏳ Frame {frame_num}/{total_frames} - {animation_type} animation")
+    
+    # Save high-quality video
+    print("💾 Saving dynamic animation...")
+    imageio.mimsave(output_path, frames, fps=fps, quality=9)
+    print(f"✅ Dynamic Shih Tzu animation saved!")
+    
+    return True
 
-    # ENHANCED SHIH TZU ANIMATION SECTION
-    - name: Install Animation Dependencies
-      run: |
-        pip install opencv-python pillow numpy imageio imageio-ffmpeg
-        echo "🎬 Shih Tzu animation dependencies installed"
+def create_animated_background(height, width, progress):
+    """Create animated gradient background that changes over time"""
+    background = np.zeros((height, width, 3), dtype=np.uint8)
+    
+    # Animated color cycling
+    time_cycle = progress * 2 * np.pi
+    
+    for y in range(height):
+        ratio = y / height
+        
+        # Dynamic colors that shift over time
+        r_base = 240 + np.sin(time_cycle) * 15
+        g_base = 220 + np.sin(time_cycle + np.pi/3) * 20
+        b_base = 255 + np.sin(time_cycle + 2*np.pi/3) * 10
+        
+        r = int(r_base * (1 - ratio * 0.2))
+        g = int(g_base * (1 - ratio * 0.1))
+        b = int(b_base - ratio * 20)
+        
+        background[y, :] = [max(0, min(255, b)), max(0, min(255, g)), max(0, min(255, r))]
+    
+    return background
 
-    - name: Create Enhanced Shih Tzu Animation Script
-      run: |
-        cat > animate_image.py << 'EOF'
-        import cv2
-        import numpy as np
-        from PIL import Image, ImageDraw, ImageFont
-        import os
-        from pathlib import Path
-        import imageio
-        import glob
-        import json
-        import random
-
-        def create_shih_tzu_animation(image_path, animation_type="eating", output_path="final_animation.mp4"):
-            """
-            Create adorable Shih Tzu food animations based on animation type
-            """
-            print(f"🐕 Creating Shih Tzu {animation_type} animation from: {image_path}")
+def create_magical_emergence(background, img, progress, target_width, target_height):
+    """Simulate Shih Tzu magically emerging with realistic effects"""
+    frame = background.copy()
+    
+    # Emergence phases
+    if progress < 0.3:
+        # Phase 1: Just sparkles and anticipation
+        alpha = 0
+        emergence_scale = 0
+    elif progress < 0.6:
+        # Phase 2: Gradual emergence
+        emergence_progress = (progress - 0.3) / 0.3
+        alpha = emergence_progress
+        emergence_scale = 0.3 + emergence_progress * 0.7
+        
+        # Add "popping" effect
+        pop_intensity = np.sin(emergence_progress * np.pi) * 0.2
+        emergence_scale += pop_intensity
+    else:
+        # Phase 3: Full visibility with joy bounce
+        alpha = 1.0
+        joy_bounce = np.sin((progress - 0.6) * 10 * np.pi) * 0.1
+        emergence_scale = 1.0 + joy_bounce
+    
+    if alpha > 0:
+        # Apply emergence scaling
+        img_height, img_width = img.shape[:2]
+        new_height = int(img_height * emergence_scale)
+        new_width = int(img_width * emergence_scale)
+        
+        if new_height > 0 and new_width > 0:
+            scaled_img = cv2.resize(img, (new_width, new_height))
             
-            # Load the image
-            img = cv2.imread(image_path)
-            if img is None:
-                print(f"❌ Could not load image: {image_path}")
-                return False
-                
-            height, width = img.shape[:2]
-            print(f"📏 Original image size: {width}x{height}")
-            
-            # Social media format (9:16 aspect ratio for TikTok/YouTube Shorts)
-            target_width = 1080
-            target_height = 1920
-            
-            # Calculate scaling to fit within target dimensions
-            scale = min(target_width/width, target_height/height) * 0.9  # Slightly smaller for cute borders
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            
-            # Resize image
-            img_resized = cv2.resize(img, (new_width, new_height))
-            
-            # Create canvas with cute gradient background
-            canvas = create_cute_background(target_height, target_width)
-            
-            # Center the image on canvas
+            # Center positioning with slight upward movement during emergence
             y_offset = (target_height - new_height) // 2
             x_offset = (target_width - new_width) // 2
             
-            # Animation parameters
-            fps = 30
-            duration = 8  # seconds - perfect for social media
-            total_frames = fps * duration
-            frames = []
+            # Emergence movement - rising effect
+            if progress < 0.6:
+                y_offset += int((1 - (progress - 0.3) / 0.3) * 50)
             
-            print(f"🎭 Creating {total_frames} frames for adorable {animation_type} animation...")
+            # Apply alpha blending
+            alpha_img = (scaled_img * alpha).astype(np.uint8)
             
-            # Animation sequences based on type
-            animation_sequences = {
-                'emergence': create_emergence_animation,
-                'eating': create_eating_animation,
-                'dancing': create_dancing_animation
-            }
+            # Blend onto background
+            end_y = min(y_offset + new_height, target_height)
+            end_x = min(x_offset + new_width, target_width)
+            start_y = max(0, y_offset)
+            start_x = max(0, x_offset)
             
-            animation_func = animation_sequences.get(animation_type, create_eating_animation)
+            crop_start_y = max(0, -y_offset)
+            crop_start_x = max(0, -x_offset)
+            crop_end_y = crop_start_y + (end_y - start_y)
+            crop_end_x = crop_start_x + (end_x - start_x)
             
-            for frame_num in range(total_frames):
-                progress = frame_num / total_frames
-                
-                # Create base canvas for this frame
-                frame_canvas = canvas.copy()
-                
-                # Apply animation-specific effects
-                animated_img = animation_func(img_resized, progress, frame_num)
-                
-                # Add sparkles and cute effects
-                frame_canvas = add_sparkles(frame_canvas, progress, animation_type)
-                
-                # Blend the animated image onto canvas
-                frame_canvas[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = animated_img
-                
-                # Add cute text overlay
-                frame_canvas = add_cute_text_overlay(frame_canvas, animation_type, progress)
-                
-                # Convert BGR to RGB for imageio
-                frame_rgb = cv2.cvtColor(frame_canvas, cv2.COLOR_BGR2RGB)
-                frames.append(frame_rgb)
-                
-                if frame_num % 60 == 0:
-                    print(f"⏳ Generated frame {frame_num}/{total_frames}")
-            
-            # Save as high-quality MP4
-            print("💾 Saving adorable Shih Tzu animation...")
-            imageio.mimsave(output_path, frames, fps=fps, quality=9, macro_block_size=1)
-            print(f"✅ Shih Tzu animation saved as {output_path}")
-            
-            return True
+            frame[start_y:end_y, start_x:end_x] = alpha_img[crop_start_y:crop_end_y, crop_start_x:crop_end_x]
+    
+    return frame
 
-        def create_cute_background(height, width):
-            """Create a cute gradient background for Shih Tzu videos"""
-            # Create soft gradient background (pink to light blue)
-            background = np.zeros((height, width, 3), dtype=np.uint8)
+def create_bouncy_dance(background, img, progress, target_width, target_height):
+    """Simulate energetic dancing with multiple movement layers"""
+    frame = background.copy()
+    
+    # Multiple rhythm layers for complex movement
+    main_bounce = np.sin(progress * 8 * np.pi) * 30  # Main vertical bounce
+    side_sway = np.sin(progress * 6 * np.pi) * 20    # Side-to-side sway
+    micro_bounce = np.sin(progress * 20 * np.pi) * 8  # Quick micro-movements
+    
+    # Scale pulsing with the beat
+    scale_pulse = 1.0 + np.sin(progress * 12 * np.pi) * 0.15
+    
+    # Rotation for dance spin
+    rotation = np.sin(progress * 4 * np.pi) * 8
+    
+    # Apply transformations
+    img_height, img_width = img.shape[:2]
+    scaled_height = int(img_height * scale_pulse)
+    scaled_width = int(img_width * scale_pulse)
+    
+    if scaled_height > 0 and scaled_width > 0:
+        scaled_img = cv2.resize(img, (scaled_width, scaled_height))
+        
+        # Calculate dynamic position
+        center_y = target_height // 2 + int(main_bounce + micro_bounce)
+        center_x = target_width // 2 + int(side_sway)
+        
+        # Apply rotation
+        rotation_matrix = cv2.getRotationMatrix2D((scaled_width//2, scaled_height//2), rotation, 1.0)
+        rotated_img = cv2.warpAffine(scaled_img, rotation_matrix, (scaled_width, scaled_height))
+        
+        # Position on frame
+        y_offset = center_y - scaled_height // 2
+        x_offset = center_x - scaled_width // 2
+        
+        # Ensure bounds
+        end_y = min(y_offset + scaled_height, target_height)
+        end_x = min(x_offset + scaled_width, target_width)
+        start_y = max(0, y_offset)
+        start_x = max(0, x_offset)
+        
+        if start_y < end_y and start_x < end_x:
+            crop_start_y = max(0, -y_offset)
+            crop_start_x = max(0, -x_offset)
+            crop_end_y = crop_start_y + (end_y - start_y)
+            crop_end_x = crop_start_x + (end_x - start_x)
             
-            for y in range(height):
-                # Soft gradient from warm pink to cool blue
-                ratio = y / height
-                
-                # Pink to light blue gradient
-                r = int(255 * (1 - ratio * 0.3))
-                g = int(240 * (1 - ratio * 0.2))
-                b = int(220 + ratio * 35)
-                
-                background[y, :] = [b, g, r]  # BGR format
-            
-            return background
+            frame[start_y:end_y, start_x:end_x] = rotated_img[crop_start_y:crop_end_y, crop_start_x:crop_end_x]
+    
+    return frame
 
-        def create_emergence_animation(img, progress, frame_num):
-            """Shih Tzu magically emerging from food"""
-            # Emergence effect - image appears with sparkly magic
+def create_eating_motion(background, img, progress, target_width, target_height):
+    """Simulate realistic eating with head movements and satisfaction"""
+    frame = background.copy()
+    
+    # Eating rhythm - multiple bites throughout animation
+    bite_cycle = np.sin(progress * 6 * np.pi)
+    bite_intensity = (bite_cycle + 1) / 2  # Normalize to 0-1
+    
+    # Head movement during eating
+    head_tilt = np.sin(progress * 8 * np.pi) * 3
+    head_forward = bite_intensity * 15  # Lean forward when biting
+    
+    # Satisfaction scaling - slightly bigger when happy
+    satisfaction = 1.0 + bite_intensity * 0.08
+    
+    # Subtle up-down motion while eating
+    eating_bob = np.sin(progress * 10 * np.pi) * 8
+    
+    # Apply transformations
+    img_height, img_width = img.shape[:2]
+    scaled_height = int(img_height * satisfaction)
+    scaled_width = int(img_width * satisfaction)
+    
+    if scaled_height > 0 and scaled_width > 0:
+        scaled_img = cv2.resize(img, (scaled_width, scaled_height))
+        
+        # Create eating movement matrix
+        center_x = scaled_width // 2
+        center_y = scaled_height // 2
+        
+        # Combine head tilt with forward motion
+        M = cv2.getRotationMatrix2D((center_x, center_y), head_tilt, 1.0)
+        # Add forward motion (translation)
+        M[0, 2] += head_forward * np.cos(np.radians(head_tilt))
+        M[1, 2] += head_forward * np.sin(np.radians(head_tilt))
+        
+        eating_img = cv2.warpAffine(scaled_img, M, (scaled_width, scaled_height))
+        
+        # Position with eating bob
+        center_frame_y = target_height // 2 + int(eating_bob)
+        center_frame_x = target_width // 2
+        
+        y_offset = center_frame_y - scaled_height // 2
+        x_offset = center_frame_x - scaled_width // 2
+        
+        # Blend onto frame
+        end_y = min(y_offset + scaled_height, target_height)
+        end_x = min(x_offset + scaled_width, target_width)
+        start_y = max(0, y_offset)
+        start_x = max(0, x_offset)
+        
+        if start_y < end_y and start_x < end_x:
+            crop_start_y = max(0, -y_offset)
+            crop_start_x = max(0, -x_offset)
+            crop_end_y = crop_start_y + (end_y - start_y)
+            crop_end_x = crop_start_x + (end_x - start_x)
             
-            if progress < 0.2:
-                # Initial food only
-                alpha = 0.3
-            elif progress < 0.5:
-                # Shih Tzu starts emerging
-                alpha = 0.3 + (progress - 0.2) * 2.5
-            else:
-                # Full emergence with joy
-                alpha = 1.0 + np.sin((progress - 0.5) * 8 * np.pi) * 0.1  # Happy bouncing
-            
-            # Scale effect during emergence
-            scale = 0.8 + alpha * 0.2
-            
-            # Apply scaling
-            height, width = img.shape[:2]
-            new_height, new_width = int(height * scale), int(width * scale)
-            
-            if new_height > 0 and new_width > 0:
-                scaled_img = cv2.resize(img, (new_width, new_height))
-                
-                # Center the scaled image
-                result = np.zeros_like(img)
-                y_start = (height - new_height) // 2
-                x_start = (width - new_width) // 2
-                
-                result[y_start:y_start+new_height, x_start:x_start+new_width] = scaled_img
-                
-                # Apply alpha blending
-                result = (result * alpha).astype(np.uint8)
-                
-                return result
-            
-            return img
+            frame[start_y:end_y, start_x:end_x] = eating_img[crop_start_y:crop_end_y, crop_start_x:crop_end_x]
+    
+    return frame
 
-        def create_eating_animation(img, progress, frame_num):
-            """Shih Tzu adorably eating animation"""
-            # Gentle eating motion - subtle head movements
+def add_floating_particles(frame, animation_type, progress):
+    """Add floating particles and magical effects"""
+    height, width = frame.shape[:2]
+    
+    # Different particle systems for different animations
+    if animation_type == 'emergence':
+        # Magical sparkles emerging from center
+        num_particles = int(30 + progress * 50)
+        for i in range(num_particles):
+            # Particles emerge from center and float outward
+            t = (progress + i * 0.1) % 1.0
+            angle = random.uniform(0, 2 * np.pi)
+            radius = t * 300
             
-            # Eating rhythm - 4 "bites" during the animation
-            bite_cycle = np.sin(progress * 4 * 2 * np.pi) * 0.5 + 0.5
+            x = int(width // 2 + np.cos(angle) * radius)
+            y = int(height // 2 + np.sin(angle) * radius - t * 100)  # Rise up
             
-            # Head tilt during eating
-            tilt_angle = np.sin(progress * 8 * np.pi) * 2  # Gentle head tilts
-            
-            # Slight zoom during bites
-            zoom = 1.0 + bite_cycle * 0.05
-            
-            # Apply gentle rotation and zoom
-            height, width = img.shape[:2]
-            center = (width // 2, height // 2)
-            
-            rotation_matrix = cv2.getRotationMatrix2D(center, tilt_angle, zoom)
-            result = cv2.warpAffine(img, rotation_matrix, (width, height))
-            
-            # Enhanced colors during eating (happiness effect)
-            hsv = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
-            hsv[:, :, 1] = cv2.multiply(hsv[:, :, 1], 1.1 + bite_cycle * 0.1)  # Saturation boost
-            result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            
-            return result
-
-        def create_dancing_animation(img, progress, frame_num):
-            """Shih Tzu cute dancing animation"""
-            # Dancing motion - bouncing and swaying
-            
-            # Bounce effect
-            bounce = np.sin(progress * 6 * 2 * np.pi) * 20  # Vertical bounce
-            
-            # Side-to-side sway
-            sway = np.sin(progress * 4 * 2 * np.pi) * 10  # Horizontal sway
-            
-            # Rotation during dance
-            spin = np.sin(progress * 3 * 2 * np.pi) * 5  # Gentle spinning
-            
-            # Dancing zoom
-            dance_zoom = 1.0 + np.sin(progress * 8 * np.pi) * 0.08
-            
-            # Apply transformations
-            height, width = img.shape[:2]
-            center = (width // 2 + int(sway), height // 2 + int(bounce))
-            
-            rotation_matrix = cv2.getRotationMatrix2D(center, spin, dance_zoom)
-            result = cv2.warpAffine(img, rotation_matrix, (width, height))
-            
-            # Add joyful color enhancement
-            hsv = cv2.cvtColor(result, cv2.COLOR_BGR2HSV)
-            hsv[:, :, 2] = cv2.multiply(hsv[:, :, 2], 1.1)  # Brightness boost for joy
-            result = cv2.cvtColor(hsv, cv2.COLOR_HSV2BGR)
-            
-            return result
-
-        def add_sparkles(canvas, progress, animation_type):
-            """Add magical sparkles around the Shih Tzu"""
-            height, width = canvas.shape[:2]
-            
-            # Different sparkle patterns for different animations
-            if animation_type == 'emergence':
-                num_sparkles = int(20 + progress * 30)  # More sparkles as Shih Tzu emerges
-            elif animation_type == 'dancing':
-                num_sparkles = int(25 + np.sin(progress * 8 * np.pi) * 15)  # Pulsing sparkles
-            else:
-                num_sparkles = int(15 + np.sin(progress * 4 * np.pi) * 10)  # Gentle sparkles
-            
-            for _ in range(num_sparkles):
-                # Random sparkle positions
-                x = random.randint(50, width - 50)
-                y = random.randint(50, height - 50)
+            if 0 <= x < width and 0 <= y < height:
+                size = random.randint(2, 6)
+                alpha = 1.0 - t  # Fade out as they float away
                 
-                # Sparkle size based on animation progress
-                size = random.randint(3, 8)
-                
-                # Cute sparkle colors (yellow, pink, white)
-                colors = [(0, 255, 255), (180, 255, 255), (255, 255, 255)]  # BGR
+                # Sparkle colors
+                colors = [(0, 255, 255), (255, 255, 0), (255, 255, 255)]
                 color = random.choice(colors)
                 
-                # Draw sparkle
-                cv2.circle(canvas, (x, y), size, color, -1)
+                # Draw with alpha
+                cv2.circle(frame, (x, y), size, color, -1)
                 
-                # Add small glow effect
-                cv2.circle(canvas, (x, y), size + 2, color, 1)
+    elif animation_type == 'dancing':
+        # Energy particles bouncing around
+        num_particles = 40
+        for i in range(num_particles):
+            t = (progress * 3 + i * 0.25) % 1.0
+            bounce = abs(np.sin(t * np.pi))
             
-            return canvas
-
-        def add_cute_text_overlay(canvas, animation_type, progress):
-            """Add cute animated text based on animation type"""
-            height, width = canvas.shape[:2]
+            x = int((i / num_particles) * width)
+            y = int(height * (0.3 + bounce * 0.4))
             
-            # Text messages for different animations
-            texts = {
-                'emergence': ['✨ Magic!', '🐕 Surprise!', '💫 Adorable!'],
-                'eating': ['😋 Yummy!', '🍽️ Nom nom!', '❤️ So cute!'],
-                'dancing': ['🎵 Dancing!', '💃 So happy!', '🎉 Woohoo!']
-            }
+            size = int(3 + bounce * 4)
+            colors = [(0, 255, 255), (255, 100, 255), (100, 255, 255)]
+            color = colors[i % len(colors)]
             
-            # Select text based on animation phase
-            text_list = texts.get(animation_type, texts['eating'])
-            text_index = int(progress * len(text_list)) % len(text_list)
-            text = text_list[text_index]
+            cv2.circle(frame, (x, y), size, color, -1)
             
-            # Text animation - bouncing
-            bounce_offset = int(np.sin(progress * 10 * np.pi) * 10)
+    else:  # eating
+        # Gentle floating hearts and satisfaction particles
+        num_particles = 15
+        for i in range(num_particles):
+            t = (progress + i * 0.2) % 1.0
             
-            # Text position (top area)
-            text_y = 150 + bounce_offset
-            text_x = width // 2
+            x = int(width * (0.2 + 0.6 * ((i / num_particles))))
+            y = int(height * (0.8 - t * 0.6))  # Float upward
             
-            # Create text with cute styling
-            font_scale = 2.0
-            thickness = 3
-            
-            # Get text size for centering
-            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
-            text_x = text_x - text_width // 2
-            
-            # Add text shadow
-            cv2.putText(canvas, text, (text_x + 3, text_y + 3), cv2.FONT_HERSHEY_SIMPLEX, 
-                        font_scale, (0, 0, 0), thickness + 2)
-            
-            # Add main text (white with pink outline)
-            cv2.putText(canvas, text, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, 
-                        font_scale, (255, 255, 255), thickness)
-            
-            return canvas
-
-        def main():
-            print("🐕 SHIH TZU ANIMATION GENERATOR STARTING...")
-            
-            # Get animation type from environment (set by n8n)
-            animation_type = os.environ.get('ANIMATION_TYPE', 'eating')
-            print(f"🎬 Animation type: {animation_type}")
-            
-            # Find DALL-E generated images
-            image_patterns = [
-                "dalle_generation_*.png",
-                "dalle_generation_*.jpg", 
-                "*.png",
-                "*.jpg"
-            ]
-            
-            image_files = []
-            for pattern in image_patterns:
-                found_files = glob.glob(pattern)
-                if found_files:
-                    image_files.extend(found_files)
-                    break
-            
-            if not image_files:
-                print("❌ No image files found!")
-                return False
+            if 0 <= x < width and 0 <= y < height:
+                size = random.randint(3, 8)
+                alpha = 1.0 - t
                 
-            # Use the first (most recent) image
-            image_path = image_files[0]
-            print(f"🖼️  Using image: {image_path}")
-            
-            # Create Shih Tzu animation
-            success = create_shih_tzu_animation(image_path, animation_type)
-            
-            if success:
-                print("🎉 Adorable Shih Tzu animation created successfully!")
-                if os.path.exists("final_animation.mp4"):
-                    size = os.path.getsize("final_animation.mp4") / (1024*1024)
-                    print(f"📊 Final animation size: {size:.2f} MB")
-                    print("🐕 Ready to melt hearts on social media!")
-            else:
-                print("❌ Failed to create Shih Tzu animation")
+                # Heart-like effect with pink/red colors
+                colors = [(255, 182, 193), (255, 105, 180), (255, 20, 147)]  # Light pink to deep pink
+                color = random.choice(colors)
                 
-            return success
+                cv2.circle(frame, (x, y), size, color, -1)
+    
+    return frame
 
-        if __name__ == "__main__":
-            main()
-        EOF
+def add_dynamic_text(frame, animation_type, progress):
+    """Add dynamic animated text"""
+    height, width = frame.shape[:2]
+    
+    # Text content based on animation
+    texts = {
+        'emergence': ['✨ MAGIC!', '🐕 SURPRISE!', '💫 AMAZING!'],
+        'eating': ['😋 YUM YUM!', '🍽️ SO GOOD!', '❤️ HAPPY PUP!'],
+        'dancing': ['🎵 DANCING!', '💃 GROOVE!', '🎉 PARTY TIME!']
+    }
+    
+    text_list = texts.get(animation_type, texts['eating'])
+    
+    # Cycle through texts
+    text_phase = int(progress * len(text_list) * 2) % len(text_list)
+    text = text_list[text_phase]
+    
+    # Dynamic text animation
+    bounce = np.sin(progress * 15 * np.pi) * 20
+    scale_pulse = 1.0 + np.sin(progress * 10 * np.pi) * 0.3
+    
+    # Position and styling
+    font_scale = 1.5 * scale_pulse
+    thickness = max(1, int(3 * scale_pulse))
+    
+    (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
+    
+    x = (width - text_width) // 2
+    y = int(200 + bounce)
+    
+    # Add shadow
+    cv2.putText(frame, text, (x + 4, y + 4), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 0, 0), thickness + 2)
+    
+    # Main text with dynamic color
+    color_cycle = progress * 2 * np.pi
+    r = int(255 * (0.5 + 0.5 * np.sin(color_cycle)))
+    g = int(255 * (0.5 + 0.5 * np.sin(color_cycle + 2*np.pi/3)))
+    b = int(255 * (0.5 + 0.5 * np.sin(color_cycle + 4*np.pi/3)))
+    
+    cv2.putText(frame, text, (x, y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (b, g, r), thickness)
+    
+    return frame
 
-    - name: Generate Shih Tzu Animation
-      env:
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
-      run: |
-        echo "🎬 Starting Shih Tzu animation generation..."
-        echo "🐕 Animation type: $ANIMATION_TYPE"
-        python animate_image.py
-
-    - name: Verify Animation Output
-      run: |
-        if [ -f "final_animation.mp4" ]; then
-          echo "✅ Shih Tzu animation file created successfully!"
-          ls -lh final_animation.mp4
-          
-          # Install ffmpeg for video analysis
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          
-          echo "📹 Video information:"
-          ffprobe -v quiet -print_format json -show_format -show_streams final_animation.mp4 | jq '.format.duration, .streams[0].width, .streams[0].height, .streams[0].avg_frame_rate'
-        else
-          echo "❌ Animation file not found!"
-          echo "📁 Current directory contents:"
-          ls -la
-          exit 1
-        fi
-
-    # ADVANCED VIDEO POST-PRODUCTION
-    - name: Install Video Processing Dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y ffmpeg imagemagick fonts-dejavu-core
+def main():
+    print("🐕 DYNAMIC SHIH TZU ANIMATION GENERATOR STARTING...")
+    
+    animation_type = os.environ.get('ANIMATION_TYPE', 'eating')
+    print(f"🎬 Creating DYNAMIC {animation_type} animation...")
+    
+    # Find image files
+    image_patterns = ["dalle_generation_*.png", "dalle_generation_*.jpg", "*.png", "*.jpg"]
+    
+    image_files = []
+    for pattern in image_patterns:
+        found_files = glob.glob(pattern)
+        if found_files:
+            image_files.extend(found_files)
+            break
+    
+    if not image_files:
+        print("❌ No image files found!")
+        return False
         
-        # Install additional fonts for better text rendering
-        sudo apt-get install -y fonts-liberation fonts-open-sans
-        
-        echo "🎬 Video processing environment ready!"
+    image_path = image_files[0]
+    print(f"🖼️  Using image: {image_path}")
+    
+    # Create dynamic animation
+    success = create_dynamic_shih_tzu_animation(image_path, animation_type)
+    
+    if success:
+        print("🎉 DYNAMIC Shih Tzu animation created!")
+        size = os.path.getsize("final_animation.mp4") / (1024*1024)
+        print(f"📊 Size: {size:.2f} MB")
+        print("🚀 This will be much more engaging!")
+    
+    return success
 
-    - name: Create Advanced Shih Tzu Video Editor Script
-      run: |
-        cat > advanced_video_editor.py << 'EOF'
-        import subprocess
-        import os
-        import json
-        import sys
-        from pathlib import Path
-
-        class ShihTzuVideoProcessor:
-            def __init__(self):
-                self.video_file = "final_animation.mp4"
-                self.audio_file = None
-                self.recipe_text = ""
-                self.output_file = "tiktok_masterpiece.mp4"
-                
-            def find_files(self):
-                """Find all necessary files for video processing"""
-                print("🔍 Searching for video and audio files...")
-                
-                # Find animated video
-                if not os.path.exists(self.video_file):
-                    print("❌ Animated video not found!")
-                    return False
-                    
-                # Check for voice audio (will be uploaded by n8n)
-                audio_files = [f for f in os.listdir(".") if f.endswith(('.mp3', '.wav', '.m4a'))]
-                if audio_files:
-                    self.audio_file = audio_files[0]
-                    print(f"🎤 Found audio: {self.audio_file}")
-                else:
-                    print("⚠️ No audio file found, creating video without voice-over")
-                
-                print(f"📹 Video: {self.video_file}")
-                return True
-                
-            def get_recipe_text(self):
-                """Extract recipe text for overlay"""
-                # Get recipe text from GitHub Actions environment
-                recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
-                animation_type = os.environ.get('ANIMATION_TYPE', 'eating')
-                
-                if recipe_from_payload:
-                    self.recipe_text = recipe_from_payload
-                else:
-                    # Generate cute Shih Tzu text based on animation type
-                    shih_tzu_texts = {
-                        'emergence': "✨ Magical Shih Tzu appears! Watch the adorable surprise! 🐕💫",
-                        'eating': "😋 Adorable Shih Tzu enjoying delicious food! So cute! 🍽️❤️",
-                        'dancing': "🎵 Dancing Shih Tzu! This little pup has the moves! 💃🐕"
-                    }
-                    self.recipe_text = shih_tzu_texts.get(animation_type, "🐕 Adorable Shih Tzu food adventure! ✨")
-                    
-                print(f"📝 Shih Tzu text: {self.recipe_text[:50]}...")
-                
-            def create_text_overlay(self):
-                """Create stylized text overlay for TikTok"""
-                # Split text into multiple lines for better readability
-                words = self.recipe_text.split()
-                lines = []
-                current_line = ""
-                
-                for word in words:
-                    if len(current_line + " " + word) <= 30:  # Shorter lines for cute text
-                        current_line += " " + word if current_line else word
-                    else:
-                        lines.append(current_line)
-                        current_line = word
-                        
-                if current_line:
-                    lines.append(current_line)
-                
-                # Limit to 3 lines for mobile viewing
-                formatted_text = "\\n".join(lines[:3])
-                
-                return formatted_text
-                
-            def create_professional_video(self):
-                """Create professional-quality Shih Tzu TikTok video"""
-                print("🎬 Creating professional Shih Tzu TikTok video...")
-                
-                formatted_text = self.create_text_overlay()
-                
-                # Advanced FFmpeg command with cute styling
-                base_cmd = [
-                    'ffmpeg', '-y',
-                    '-i', self.video_file
-                ]
-                
-                # Add audio if available
-                if self.audio_file:
-                    base_cmd.extend(['-i', self.audio_file])
-                
-                # Create sophisticated filter complex for Shih Tzu content
-                filter_parts = []
-                
-                # Video scaling and cute effects
-                filter_parts.append(
-                    "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,"
-                    "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=#FFE4E1@1.0,"  # Cute pink background
-                    "eq=brightness=0.08:contrast=1.15:saturation=1.2[scaled]"  # Enhanced for cute content
-                )
-                
-                # Advanced text overlay with cute styling
-                text_filter = (
-                    f"[scaled]drawtext="
-                    f"text='{formatted_text}':"
-                    f"fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:"
-                    f"fontsize=42:"
-                    f"fontcolor=white:"
-                    f"x=(w-text_w)/2:"
-                    f"y=h-250:"
-                    f"box=1:"
-                    f"boxcolor=#FF69B4@0.8:"  # Cute pink box
-                    f"boxborderw=10:"
-                    f"shadowcolor=black@0.8:"
-                    f"shadowx=3:"
-                    f"shadowy=3[texted]"
-                )
-                filter_parts.append(text_filter)
-                
-                # Combine filters
-                filter_complex = ";".join(filter_parts)
-                
-                base_cmd.extend([
-                    '-filter_complex', filter_complex,
-                    '-map', '[texted]'
-                ])
-                
-                # Audio mapping
-                if self.audio_file:
-                    base_cmd.extend(['-map', '1:a'])
-                    
-                # Professional encoding settings optimized for social media
-                base_cmd.extend([
-                    '-c:v', 'libx264',
-                    '-preset', 'medium',
-                    '-crf', '20',  # Higher quality for cute content
-                    '-c:a', 'aac',
-                    '-b:a', '128k',
-                    '-r', '30',
-                    '-shortest' if self.audio_file else '-t', '8',
-                    self.output_file
-                ])
-                
-                try:
-                    print("🚀 Executing advanced Shih Tzu video processing...")
-                    result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
-                    
-                    if result.returncode == 0:
-                        print("✅ Professional Shih Tzu video created successfully!")
-                        self.analyze_output()
-                        return True
-                    else:
-                        print(f"❌ FFmpeg error: {result.stderr}")
-                        return False
-                        
-                except subprocess.TimeoutExpired:
-                    print("❌ Video processing timed out")
-                    return False
-                except Exception as e:
-                    print(f"❌ Unexpected error: {e}")
-                    return False
-                    
-            def analyze_output(self):
-                """Analyze the created video"""
-                if not os.path.exists(self.output_file):
-                    return
-                    
-                # Get video info
-                info_cmd = [
-                    'ffprobe', '-v', 'quiet', '-print_format', 'json',
-                    '-show_format', '-show_streams', self.output_file
-                ]
-                
-                try:
-                    result = subprocess.run(info_cmd, capture_output=True, text=True)
-                    if result.returncode == 0:
-                        info = json.loads(result.stdout)
-                        duration = float(info['format']['duration'])
-                        size_mb = os.path.getsize(self.output_file) / (1024*1024)
-                        
-                        print(f"📊 Shih Tzu Video Analysis:")
-                        print(f"   Duration: {duration:.1f} seconds")
-                        print(f"   File Size: {size_mb:.1f} MB")
-                        print(f"   Format: MP4 (1080x1920)")
-                        print(f"   Status: Ready to melt hearts! 🐕💕")
-                        
-                except Exception as e:
-                    print(f"⚠️ Could not analyze video: {e}")
-                    
-            def process_video(self):
-                """Main processing pipeline"""
-                print("🐕 STARTING SHIH TZU VIDEO PROCESSING PIPELINE")
-                print("=" * 50)
-                
-                if not self.find_files():
-                    return False
-                    
-                self.get_recipe_text()
-                
-                success = self.create_professional_video()
-                
-                if success:
-                    print("🎉 SHIH TZU MASTERPIECE CREATED!")
-                    print(f"📱 File: {self.output_file}")
-                    return True
-                else:
-                    print("❌ Video processing failed")
-                    return False
-
-        # Execute the video processor
-        if __name__ == "__main__":
-            processor = ShihTzuVideoProcessor()
-            success = processor.process_video()
-            sys.exit(0 if success else 1)
-        EOF
-
-    - name: Execute Advanced Shih Tzu Video Processing
-      env:
-        RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'eating' }}
-      run: |
-        echo "🎬 Launching advanced Shih Tzu video processing..."
-        python3 advanced_video_editor.py
-
-    - name: Upload generated images
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: generated-images
-        path: "dalle_generation_*.png"
-        retention-days: 30
-
-    - name: Upload animated video
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: animated-video
-        path: "final_animation.mp4"
-        retention-days: 30
-
-    - name: Upload Shih Tzu Masterpiece
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: tiktok-masterpiece
-        path: |
-          tiktok_masterpiece.mp4
-          final_animation.mp4
-          *.mp3
-          *.wav
-        retention-days: 30
-
-    - name: Create Epic Shih Tzu Summary
-      if: always()
-      run: |
-        echo "## 🐕 ADORABLE SHIH TZU MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Your Complete Shih Tzu Content Package:" >> $GITHUB_STEP_SUMMARY
-        
-        if [ -f "tiktok_masterpiece.mp4" ]; then
-          VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
-          ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'eating' }}"
-          echo "- 🎥 **Shih Tzu Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🐕 **Animation Type:** $ANIMATION_TYPE" >> $GITHUB_STEP_SUMMARY
-          echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** ~8 seconds (Optimal for engagement)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎬 **Animation:** $ANIMATION_TYPE with sparkles and cute effects" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎨 **Background:** Cute gradient with magical sparkles" >> $GITHUB_STEP_SUMMARY
-          echo "- 📝 **Text:** Adorable overlays with bouncing animation" >> $GITHUB_STEP_SUMMARY
-        fi
-        
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🎯 Ready to Go Viral!" >> $GITHUB_STEP_SUMMARY
-        echo "Your adorable Shih Tzu content is ready for:" >> $GITHUB_STEP_SUMMARY
-        echo "- TikTok (optimized for maximum cuteness)" >> $GITHUB_STEP_SUMMARY
-        echo "- YouTube Shorts (perfect vertical format)" >> $GITHUB_STEP_SUMMARY
-        echo "- Instagram Reels (premium quality)" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🐕 CUTENESS LEVEL: MAXIMUM 💕**" >> $GITHUB_STEP_SUMMARY
-
-    - name: Job completed
-      if: always()
-      run: echo "✅ Ultimate Shih Tzu Content Creation mission completed! 🐕✨"
+if __name__ == "__main__":
+    main()

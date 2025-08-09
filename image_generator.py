@@ -80,7 +80,8 @@ class RunwayMLVideoBot:
             # RunwayML Gen-2 API request
             headers = {
                 "Authorization": f"Bearer {self.runwayml_api_key}",
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-Runway-Version": "2024-09-13"
             }
             
             payload = {

@@ -76,6 +76,9 @@ class RunwayMLVideoBot:
                 logger.info("⚠️ Falling back to enhanced static animation...")
                 return self.fallback_to_enhanced_static()
             
+            logger.info("🔍 Checking RunwayML account status first...")
+            self.check_account_status()
+            
             enhanced_prompt = self.create_enhanced_prompt()
             logger.info(f"📝 Enhanced Prompt: {enhanced_prompt[:100]}...")
             
@@ -116,11 +119,12 @@ class RunwayMLVideoBot:
                 "X-Runway-Version": "2024-11-06"
             }
             
+            # Try the simplest possible Gen-3 request first
             payload = {
                 "promptImage": data_uri,
-                "promptText": enhanced_prompt,
-                "model": "gen4_turbo",
-                "ratio": "720:1280",  # 9:16 aspect ratio
+                "promptText": "A cute dog moving slightly",  # Very simple prompt
+                "model": "gen3a_turbo",
+                "ratio": "768:1280",
                 "duration": 5
             }
             
@@ -261,7 +265,34 @@ class RunwayMLVideoBot:
             logger.error(f"❌ Error saving video: {e}")
             return False
     
-    def generate_dalle_base_image(self):
+    def check_account_status(self):
+        """Check RunwayML account status and credits via API"""
+        try:
+            headers = {
+                "Authorization": f"Bearer {self.runwayml_api_key}",
+                "Content-Type": "application/json",
+                "X-Runway-Version": "2024-11-06"
+            }
+            
+            # Try to check account/organization status
+            response = requests.get(
+                "https://api.dev.runwayml.com/v1/me",
+                headers=headers,
+                timeout=30
+            )
+            
+            logger.info(f"🔍 Account status check: {response.status_code}")
+            if response.status_code == 200:
+                account_info = response.json()
+                logger.info(f"✅ Account info: {account_info}")
+            else:
+                logger.warning(f"⚠️ Account check failed: {response.text}")
+                
+            return response.status_code == 200
+            
+        except Exception as e:
+            logger.error(f"❌ Error checking account: {e}")
+            return False
         """Generate base image using DALL-E for RunwayML input"""
         try:
             openai_api_key = os.getenv('OPENAI_API_KEY')

@@ -11,6 +11,8 @@ import sys
 import logging
 import json
 import requests
+import base64
+import glob
 from datetime import datetime
 
 # Set up logging
@@ -65,7 +67,7 @@ class RunwayMLVideoBot:
         return enhanced_prompt
     
     def generate_runwayml_video(self):
-        """Generate real animated video using RunwayML Gen-2"""
+        """Generate real animated video using RunwayML Gen-4"""
         try:
             logger.info("🎬 STARTING RUNWAYML AI VIDEO GENERATION...")
             
@@ -77,28 +79,56 @@ class RunwayMLVideoBot:
             enhanced_prompt = self.create_enhanced_prompt()
             logger.info(f"📝 Enhanced Prompt: {enhanced_prompt[:100]}...")
             
-            # RunwayML Gen-2 API request
+            # First, we need to generate an image to use with image_to_video
+            logger.info("🖼️ First generating base image with DALL-E...")
+            
+            # Use DALL-E to create base image
+            dalle_success = self.generate_dalle_base_image()
+            if not dalle_success:
+                logger.error("❌ Failed to generate base image")
+                return False
+            
+            # Find the generated image
+            image_files = []
+            for pattern in ["dalle_generation_*.png", "*.png", "*.jpg"]:
+                found_files = glob.glob(pattern)
+                if found_files:
+                    image_files.extend(found_files)
+                    break
+            
+            if not image_files:
+                logger.error("❌ No base image found for RunwayML")
+                return False
+                
+            base_image_path = image_files[0]
+            logger.info(f"🖼️ Using base image: {base_image_path}")
+            
+            # Convert image to base64 for RunwayML
+            with open(base_image_path, 'rb') as f:
+                image_data = f.read()
+                base64_image = base64.b64encode(image_data).decode('utf-8')
+                data_uri = f"data:image/png;base64,{base64_image}"
+            
+            # RunwayML Gen-4 API request
             headers = {
                 "Authorization": f"Bearer {self.runwayml_api_key}",
                 "Content-Type": "application/json",
-                "X-Runway-Version": "2024-09-13"
+                "X-Runway-Version": "2024-11-06"
             }
             
             payload = {
-                "text_prompt": enhanced_prompt,
-                "duration": 4,  # 4 seconds of real animation
-                "ratio": "9:16",  # Vertical format
-                "motion": 5,  # Maximum motion for realistic movement
-                "seed": random.randint(1, 10000),
-                "interpolate": True,
-                "upscale": True
+                "promptImage": data_uri,
+                "promptText": enhanced_prompt,
+                "model": "gen4_turbo",
+                "ratio": "720:1280",  # 9:16 aspect ratio
+                "duration": 5
             }
             
-            logger.info("🚀 Sending request to RunwayML Gen-2...")
+            logger.info("🚀 Sending request to RunwayML Gen-4...")
             
-            # Generate video (using correct dev API endpoint)
+            # Generate video using correct RunwayML API
             response = requests.post(
-                "https://api.dev.runwayml.com/v1/generate",
+                "https://api.dev.runwayml.com/v1/image_to_video",
                 headers=headers,
                 json=payload,
                 timeout=120
@@ -106,7 +136,7 @@ class RunwayMLVideoBot:
             
             if response.status_code == 200:
                 result = response.json()
-                task_id = result.get('task_id')
+                task_id = result.get('id')
                 
                 logger.info(f"✅ Video generation started! Task ID: {task_id}")
                 
@@ -134,6 +164,8 @@ class RunwayMLVideoBot:
                         
         except Exception as e:
             logger.error(f"❌ Error generating RunwayML video: {e}")
+            import traceback
+            traceback.print_exc()
             return False
     
     def poll_for_completion(self, task_id, headers, max_wait=180):
@@ -154,19 +186,27 @@ class RunwayMLVideoBot:
                     
                     logger.info(f"🔄 Generation status: {status}")
                     
-                    if status == 'completed':
-                        video_url = result.get('output', {}).get('video_url')
-                        logger.info("🎉 Video generation completed!")
-                        return video_url
-                    elif status == 'failed':
+                    if status == 'SUCCEEDED':
+                        # Get video URL from output
+                        output = result.get('output', [])
+                        if output and len(output) > 0:
+                            video_url = output[0]
+                            logger.info("🎉 Video generation completed!")
+                            return video_url
+                        else:
+                            logger.error("❌ No output URL found")
+                            return None
+                    elif status == 'FAILED':
                         logger.error("❌ Video generation failed")
+                        logger.error(f"Error details: {result}")
                         return None
                     else:
                         # Still processing, wait and check again
-                        time.sleep(10)
+                        time.sleep(15)  # Longer wait for video generation
                 else:
                     logger.warning(f"⚠️ Status check returned: {response.status_code}")
-                    time.sleep(10)
+                    logger.warning(f"Response: {response.text}")
+                    time.sleep(15)
                     
             except Exception as e:
                 logger.error(f"❌ Error checking status: {e}")
@@ -221,11 +261,65 @@ class RunwayMLVideoBot:
             logger.error(f"❌ Error saving video: {e}")
             return False
     
-    def fallback_to_enhanced_static(self):
-        """Fallback to DALL-E if RunwayML is not available"""
-        logger.info("🔄 Using DALL-E fallback...")
-        # Import and use original DALL-E logic here if needed
-        return False
+    def generate_dalle_base_image(self):
+        """Generate base image using DALL-E for RunwayML input"""
+        try:
+            openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not openai_api_key:
+                logger.error("❌ OPENAI_API_KEY not found")
+                return False
+            
+            headers = {
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # Create simpler prompt for base image
+            base_prompt = f"A tiny fluffy Shih Tzu puppy with big expressive eyes and soft fur, sitting next to a beautiful {self.animation_type} food dish. Professional food photography, clean background, high quality, detailed."
+            
+            payload = {
+                "model": "dall-e-3",
+                "prompt": base_prompt,
+                "n": 1,
+                "size": "1024x1024",
+                "quality": "hd",
+                "style": "vivid"
+            }
+            
+            logger.info("🎨 Generating base image with DALL-E...")
+            
+            response = requests.post(
+                "https://api.openai.com/v1/images/generations",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                image_url = result['data'][0]['url']
+                
+                # Download the image
+                img_response = requests.get(image_url, timeout=30)
+                if img_response.status_code == 200:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"dalle_generation_{timestamp}.png"
+                    
+                    with open(filename, 'wb') as f:
+                        f.write(img_response.content)
+                    
+                    logger.info(f"✅ Base image saved: {filename}")
+                    return True
+                else:
+                    logger.error("❌ Failed to download DALL-E image")
+                    return False
+            else:
+                logger.error(f"❌ DALL-E API error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Error generating DALL-E base image: {e}")
+            return False
     
     def run_generation_mission(self):
         """Execute the complete video generation mission"""

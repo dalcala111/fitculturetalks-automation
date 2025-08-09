@@ -68,11 +68,11 @@ class RunwayMLVideoBot:
         # Fallback prompts with fancy plate concept
         fancy_plate_prompts = {
             'emergence': [
-                "Tiny fluffy Shih Tzu dramatically pops up from inside center of viral trending food beautifully plated on elegant white ceramic plate like jack-in-the-box, stays perfectly centered in frame, then adorably devours food with pieces falling off plate. Camera completely static, no movement. Dog emerges upward from food center with bouncy motion, big expressive eyes, soft fur. Magical sparkles during emergence. Messy but cute eating with realistic food physics. 3D Pixar style animation.",
+                "Tiny fluffy Shih Tzu is sitting INSIDE trendy food on elegant white ceramic plate like sitting in a food bath, with head and paws emerging upward from within the food itself. Dog is submerged in the food and pops head up from within, camera completely static, no movement. Dog emerges from within the food like coming up from a food bath, not standing behind it. Magical sparkles, 3D Pixar animation.",
                 
-                "Adorable Shih Tzu magically emerging from trendy food on fancy white plate, static camera position, dog stays centered, then makes adorable mess eating with food falling off plate. Jack-in-the-box surprise effect with sparkles. Eye-level frontal view showcasing expressive face. Elegant plating, no dog bowl. 3D animation style.",
+                "Adorable Shih Tzu literally sitting inside trendy food on fancy white plate like in a food bath, head emerging from within the food itself, static camera position, dog is submerged/buried in food. Eye-level frontal view showcasing expressive face. Elegant plating, dog is IN the food not behind it.",
                 
-                "Cute Shih Tzu pops out of beautifully plated viral food like surprise, camera never moves, dog remains center frame, adorably eats with food scattering off elegant plate. Magical emergence with sparkles, then messy eating action. No camera movement, static position throughout."
+                "Cute Shih Tzu sitting inside beautifully plated viral food like in a bath, head and paws visible above food surface, camera never moves, dog is literally inside the food dish. Magical emergence with sparkles, dog is submerged in food."
             ],
             
             'eating': [
@@ -364,9 +364,9 @@ class RunwayMLVideoBot:
                 "Content-Type": "application/json"
             }
             
-            # Create enhanced base image prompt focusing on fancy plate presentation
+            # Create enhanced base image prompt focusing on dog INSIDE food
             if 'emergence' in self.animation_type:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes and soft cream/brown fur positioned next to an elegant white ceramic plate with beautifully presented viral trending food (pasta, dessert, or street food). The food is artistically plated on the fancy dish. Clean modern kitchen background, professional food photography lighting, high quality, detailed. The scene is set up for the dog to emerge from the food."
+                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes sitting INSIDE a large bowl of beautifully presented viral trending food on an elegant white ceramic plate. The dog is submerged/buried in the food like sitting in a food bath, with only head and front paws visible above the food surface. The food appears deep and voluminous enough for a small dog to sit in. Clean modern kitchen background, professional food photography lighting, high quality, detailed. The scene shows the dog literally inside the food, not behind or next to it."
             else:
                 dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes and soft cream/brown fur next to an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, no dog bowl, high quality, detailed."
             

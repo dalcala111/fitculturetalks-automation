@@ -95,9 +95,9 @@ class RunwayMLVideoBot:
             
             logger.info("🚀 Sending request to RunwayML Gen-2...")
             
-            # Generate video
+            # Generate video (using correct dev API endpoint)
             response = requests.post(
-                "https://api.runwayml.com/v1/generate",
+                "https://api.dev.runwayml.com/v1/generate",
                 headers=headers,
                 json=payload,
                 timeout=120
@@ -142,7 +142,7 @@ class RunwayMLVideoBot:
         while time.time() - start_time < max_wait:
             try:
                 response = requests.get(
-                    f"https://api.runwayml.com/v1/tasks/{task_id}",
+                    f"https://api.dev.runwayml.com/v1/tasks/{task_id}",
                     headers=headers,
                     timeout=30
                 )

@@ -57,6 +57,7 @@ jobs:
         PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
         echo "🔍 Debug: Checking inputs..."
         echo "Repository dispatch prompt: ${{ github.event.client_payload.prompt }}"
@@ -65,12 +66,14 @@ jobs:
         echo "Animation type: $ANIMATION_TYPE"
         echo "Content category: ${{ github.event.client_payload.content_category }}"
         echo "RunwayML API key configured: $([[ -n "$RUNWAYML_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
+        echo "OpenAI API key configured: $([[ -n "$OPENAI_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
         
     - name: Run Enhanced RunwayML Video Generator
       env:
         PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
+        OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
         echo "🎬 Generating REAL animated Shih Tzu video with RunwayML..."

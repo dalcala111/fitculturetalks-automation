@@ -76,9 +76,6 @@ class RunwayMLVideoBot:
                 logger.info("⚠️ Falling back to enhanced static animation...")
                 return self.fallback_to_enhanced_static()
             
-            logger.info("🔍 Checking RunwayML account status first...")
-            self.check_account_status()
-            
             enhanced_prompt = self.create_enhanced_prompt()
             logger.info(f"📝 Enhanced Prompt: {enhanced_prompt[:100]}...")
             
@@ -265,6 +262,66 @@ class RunwayMLVideoBot:
             logger.error(f"❌ Error saving video: {e}")
             return False
     
+    def generate_dalle_base_image(self):
+        """Generate base image using DALL-E for RunwayML input"""
+        try:
+            openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not openai_api_key:
+                logger.error("❌ OPENAI_API_KEY not found")
+                return False
+            
+            headers = {
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # Create simpler prompt for base image
+            base_prompt = f"A tiny fluffy Shih Tzu puppy with big expressive eyes and soft fur, sitting next to a beautiful {self.animation_type} food dish. Professional food photography, clean background, high quality, detailed."
+            
+            payload = {
+                "model": "dall-e-3",
+                "prompt": base_prompt,
+                "n": 1,
+                "size": "1024x1024",
+                "quality": "hd",
+                "style": "vivid"
+            }
+            
+            logger.info("🎨 Generating base image with DALL-E...")
+            
+            response = requests.post(
+                "https://api.openai.com/v1/images/generations",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                image_url = result['data'][0]['url']
+                
+                # Download the image
+                img_response = requests.get(image_url, timeout=30)
+                if img_response.status_code == 200:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"dalle_generation_{timestamp}.png"
+                    
+                    with open(filename, 'wb') as f:
+                        f.write(img_response.content)
+                    
+                    logger.info(f"✅ Base image saved: {filename}")
+                    return True
+                else:
+                    logger.error("❌ Failed to download DALL-E image")
+                    return False
+            else:
+                logger.error(f"❌ DALL-E API error: {response.status_code}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Error generating DALL-E base image: {e}")
+            return False
+
     def check_account_status(self):
         """Check RunwayML account status and credits via API"""
         try:

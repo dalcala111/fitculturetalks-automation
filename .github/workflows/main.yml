@@ -1,4 +1,4 @@
-name: "Ultimate RunwayML Shih Tzu Dancing Generator"
+name: "Ultimate RunwayML Deuce Dancing Generator"
 on:
   repository_dispatch:
     types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video]
@@ -7,18 +7,18 @@ on:
       prompt:
         description: 'Image generation prompt'
         required: true
-        default: 'adorable Shih Tzu dancing next to delicious trending food dish'
+        default: 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish'
       animation_type:
         description: 'Animation type (dancing, eating, emergence)'
         required: false
         default: 'dancing'
 jobs:
-  runwayml-shih-tzu-generator:
+  runwayml-deuce-generator:
     runs-on: ubuntu-latest
     
     steps:
     - name: Set up job
-      run: echo "🎬 Starting Ultimate RunwayML Shih Tzu Dancing mission"
+      run: echo "🎬 Starting Ultimate RunwayML Deuce Human-Like Dancing mission"
       
     - name: Checkout code
       uses: actions/checkout@v4
@@ -52,9 +52,9 @@ jobs:
         echo "📦 Installed packages:"
         pip list
 
-    - name: Debug Enhanced Dancing Payload
+    - name: Debug Enhanced Deuce Dancing Payload
       env:
-        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu dancing next to delicious trending food dish' }}
+        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
         RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
@@ -65,9 +65,9 @@ jobs:
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        echo "🔍 Debug: Enhanced Dancing Parameters..."
+        echo "🔍 Debug: Enhanced Deuce Dancing Parameters..."
         echo "Primary prompt: $PROMPT"
-        echo "Dancing motion prompt: $DANCING_MOTION_PROMPT"
+        echo "Deuce dancing motion prompt: $DANCING_MOTION_PROMPT"
         echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
         echo "Camera motion: $CAMERA_MOTION (0 = static)"
         echo "Motion strength: $MOTION_STRENGTH"
@@ -76,13 +76,13 @@ jobs:
         echo "Animation type: $ANIMATION_TYPE"
         echo "RunwayML API key configured: $([[ -n "$RUNWAYML_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
         
-    - name: Run Enhanced RunwayML Dancing Video Generator
+    - name: Run Enhanced RunwayML Deuce Dancing Video Generator
       env:
         # Primary prompt settings
-        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu dancing next to delicious trending food dish' }}
+        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
         
-        # Dancing-specific motion settings for camera control
+        # Deuce dancing-specific motion settings for camera control
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
         RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
         CAMERA_MOTION: ${{ github.event.client_payload.runway_motion_settings.camera_motion || '0' }}
@@ -97,11 +97,11 @@ jobs:
         RESOLUTION: ${{ github.event.client_payload.runway_generation_params.resolution || '1280x768' }}
         MODEL: ${{ github.event.client_payload.runway_generation_params.model || 'gen3a_turbo' }}
         
-        # Motion brush settings for dancing effect
-        SUBJECT_AREA: ${{ github.event.client_payload.runway_motion_brush.subject_area || 'shih_tzu_character' }}
-        MOTION_TYPE: ${{ github.event.client_payload.runway_motion_brush.motion_type || 'dancing_movement' }}
-        MOTION_DIRECTION: ${{ github.event.client_payload.runway_motion_brush.motion_direction || 'bouncing_rhythmic' }}
-        MOTION_INTENSITY: ${{ github.event.client_payload.runway_motion_brush.motion_intensity || 'medium_bouncy' }}
+        # Motion brush settings for human-like dancing effect
+        SUBJECT_AREA: ${{ github.event.client_payload.runway_motion_brush.subject_area || 'deuce_shih_tzu_character' }}
+        MOTION_TYPE: ${{ github.event.client_payload.runway_motion_brush.motion_type || 'human_like_dancing_movement' }}
+        MOTION_DIRECTION: ${{ github.event.client_payload.runway_motion_brush.motion_direction || 'upright_anthropomorphic_dancing' }}
+        MOTION_INTENSITY: ${{ github.event.client_payload.runway_motion_brush.motion_intensity || 'medium_bouncy_human_like' }}
         STATIC_AREAS: ${{ github.event.client_payload.runway_motion_brush.static_areas || 'background_plate_edges' }}
         
         # API keys
@@ -109,11 +109,11 @@ jobs:
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
-        echo "🎬 Generating REAL animated Shih Tzu dancing video with RunwayML..."
-        echo "🕺 Dancing animation with STATIC camera"
+        echo "🎬 Generating REAL animated Deuce dancing video with RunwayML..."
+        echo "🕺 Human-like dancing animation with STATIC camera"
         echo "Animation type: $ANIMATION_TYPE"
         echo "Camera motion: $CAMERA_MOTION (0 = completely static)"
-        echo "Using dancing motion prompt: $DANCING_MOTION_PROMPT"
+        echo "Using Deuce dancing motion prompt: $DANCING_MOTION_PROMPT"
         echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
         
         # Run the enhanced RunwayML video generator
@@ -122,7 +122,7 @@ jobs:
         # Verify video was created
         echo "📹 Checking generated videos..."
         if ls final_animation.mp4 1> /dev/null 2>&1; then
-          echo "✅ RunwayML dancing video generated successfully!"
+          echo "✅ RunwayML Deuce dancing video generated successfully!"
           ls -la final_animation.mp4
         elif ls runwayml_generation_*.mp4 1> /dev/null 2>&1; then
           echo "✅ RunwayML video files found!"
@@ -132,13 +132,13 @@ jobs:
           ls -la *.jpg *.jpeg *.png 2>/dev/null || echo "❌ No files found!"
         fi
 
-    # ENHANCED SHIH TZU ANIMATION SECTION (Fallback for non-RunwayML content)
+    # ENHANCED DEUCE ANIMATION SECTION (Fallback for non-RunwayML content)
     - name: Install Animation Dependencies
       run: |
         pip install opencv-python pillow numpy imageio imageio-ffmpeg
         echo "🎬 Backup animation dependencies installed"
 
-    - name: Create Enhanced Shih Tzu Animation Script (Fallback)
+    - name: Create Enhanced Deuce Animation Script (Fallback)
       run: |
         cat > animate_image.py << 'EOF'
         import cv2
@@ -150,7 +150,7 @@ jobs:
 
         def create_fallback_animation():
             """Create fallback animation if RunwayML didn't generate video"""
-            print("🔄 Creating fallback animation...")
+            print("🔄 Creating fallback Deuce animation...")
             
             # Check if RunwayML already created final_animation.mp4
             if os.path.exists("final_animation.mp4"):
@@ -195,7 +195,7 @@ jobs:
             
             # Save fallback video
             imageio.mimsave("final_animation.mp4", frames, fps=30, quality=8)
-            print("✅ Fallback animation created")
+            print("✅ Fallback Deuce animation created")
             return True
 
         if __name__ == "__main__":
@@ -206,7 +206,7 @@ jobs:
       env:
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
       run: |
-        echo "🎬 Checking if backup animation is needed..."
+        echo "🎬 Checking if backup Deuce animation is needed..."
         
         if [ -f "final_animation.mp4" ]; then
           echo "✅ RunwayML video exists, no backup needed"
@@ -219,7 +219,7 @@ jobs:
     - name: Verify Video Output
       run: |
         if [ -f "final_animation.mp4" ]; then
-          echo "✅ Video file ready for processing!"
+          echo "✅ Deuce video file ready for processing!"
           ls -lh final_animation.mp4
           
           # Install ffmpeg for video analysis
@@ -245,7 +245,7 @@ jobs:
         
         echo "🎬 Video processing environment ready!"
 
-    - name: Create Advanced RunwayML Video Editor Script
+    - name: Create Advanced RunwayML Deuce Video Editor Script
       run: |
         cat > advanced_video_editor.py << 'EOF'
         import subprocess
@@ -263,7 +263,7 @@ jobs:
                 
             def find_files(self):
                 """Find all necessary files for video processing"""
-                print("🔍 Searching for RunwayML video and audio files...")
+                print("🔍 Searching for RunwayML Deuce video and audio files...")
                 
                 # Find animated video
                 if not os.path.exists(self.video_file):
@@ -290,13 +290,13 @@ jobs:
                 if recipe_from_payload:
                     self.recipe_text = recipe_from_payload
                 else:
-                    # Generate cute Shih Tzu text based on animation type
-                    shih_tzu_texts = {
-                        'emergence': "✨ Adorable Shih Tzu discovers amazing food! So precious! 🐕💫",
-                        'eating': "😋 Watch this precious Shih Tzu enjoy delicious food! So adorable! 🍽️❤️",
-                        'dancing': "🎵 Dancing Shih Tzu! This little angel has the best moves! 💃🐕"
+                    # Generate cute Deuce text based on animation type
+                    deuce_texts = {
+                        'emergence': "✨ Deuce discovers amazing food! So precious! 🐕💫",
+                        'eating': "😋 Watch Deuce enjoy delicious food! So adorable! 🍽️❤️",
+                        'dancing': "🎵 Deuce dances like a human! This little angel has the best moves! 💃🐕"
                     }
-                    self.recipe_text = shih_tzu_texts.get(animation_type, "🐕 The most adorable Shih Tzu dancing adventure! ✨")
+                    self.recipe_text = deuce_texts.get(animation_type, "🐕 Deuce's most adorable human-like dancing adventure! ✨")
                     
                 print(f"📝 Video text: {self.recipe_text[:50]}...")
                 
@@ -324,7 +324,7 @@ jobs:
                 
             def create_professional_video(self):
                 """Create professional-quality RunwayML enhanced video"""
-                print("🎬 Creating professional RunwayML Shih Tzu dancing video...")
+                print("🎬 Creating professional RunwayML Deuce dancing video...")
                 
                 formatted_text = self.create_text_overlay()
                 
@@ -396,7 +396,7 @@ jobs:
                     result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
                     
                     if result.returncode == 0:
-                        print("✅ Professional RunwayML dancing video created successfully!")
+                        print("✅ Professional RunwayML Deuce dancing video created successfully!")
                         self.analyze_output()
                         return True
                     else:
@@ -428,7 +428,7 @@ jobs:
                         duration = float(info['format']['duration'])
                         size_mb = os.path.getsize(self.output_file) / (1024*1024)
                         
-                        print(f"📊 RunwayML Dancing Video Analysis:")
+                        print(f"📊 RunwayML Deuce Dancing Video Analysis:")
                         print(f"   Duration: {duration:.1f} seconds")
                         print(f"   File Size: {size_mb:.1f} MB")
                         print(f"   Format: MP4 (1080x1920)")
@@ -439,7 +439,7 @@ jobs:
                     
             def process_video(self):
                 """Main processing pipeline"""
-                print("🎬 STARTING RUNWAYML DANCING VIDEO PROCESSING PIPELINE")
+                print("🎬 STARTING RUNWAYML DEUCE DANCING VIDEO PROCESSING PIPELINE")
                 print("=" * 50)
                 
                 if not self.find_files():
@@ -450,7 +450,7 @@ jobs:
                 success = self.create_professional_video()
                 
                 if success:
-                    print("🎉 RUNWAYML DANCING MASTERPIECE CREATED!")
+                    print("🎉 RUNWAYML DEUCE DANCING MASTERPIECE CREATED!")
                     print(f"📱 File: {self.output_file}")
                     return True
                 else:
@@ -469,24 +469,24 @@ jobs:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'dancing' }}
       run: |
-        echo "🎬 Launching advanced RunwayML dancing video processing..."
+        echo "🎬 Launching advanced RunwayML Deuce dancing video processing..."
         python3 advanced_video_editor.py
 
     - name: Upload generated videos
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: runwayml-dancing-videos
+        name: runwayml-deuce-dancing-videos
         path: |
           runwayml_generation_*.mp4
           final_animation.mp4
         retention-days: 30
 
-    - name: Upload RunwayML Dancing Masterpiece
+    - name: Upload RunwayML Deuce Dancing Masterpiece
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: dancing-tiktok-masterpiece
+        name: deuce-dancing-tiktok-masterpiece
         path: |
           tiktok_masterpiece.mp4
           final_animation.mp4
@@ -494,35 +494,35 @@ jobs:
           *.wav
         retention-days: 30
 
-    - name: Create Epic RunwayML Dancing Summary
+    - name: Create Epic RunwayML Deuce Dancing Summary
       if: always()
       run: |
-        echo "## 🕺 RUNWAYML SHIH TZU DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
+        echo "## 🕺 RUNWAYML DEUCE DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🚀 Your Professional AI Dancing Video Package:" >> $GITHUB_STEP_SUMMARY
         
         if [ -f "tiktok_masterpiece.mp4" ]; then
           VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
           ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'dancing' }}"
-          echo "- 🎥 **RunwayML Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎥 **RunwayML Deuce Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
           echo "- 🤖 **AI Technology:** RunwayML Gen-3a Turbo (Real Animation)" >> $GITHUB_STEP_SUMMARY
           echo "- 🎯 **Camera Control:** Static positioning (no drift)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🕺 **Animation Type:** Adorable Shih Tzu dancing with centered framing" >> $GITHUB_STEP_SUMMARY
+          echo "- 🕺 **Star:** Deuce the Shih Tzu dancing like a human with centered framing" >> $GITHUB_STEP_SUMMARY
           echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
           echo "- ⏱️ **Duration:** Professional 5-second videos" >> $GITHUB_STEP_SUMMARY
           echo "- 🎬 **Quality:** Cinema-grade AI animation" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎨 **Movement:** Realistic dancing moves with rhythm and joy" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Movement:** Human-like upright dancing with arm movements" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🎯 Ready for Viral Success!" >> $GITHUB_STEP_SUMMARY
-        echo "Your professional RunwayML dancing content is optimized for:" >> $GITHUB_STEP_SUMMARY
+        echo "Your professional RunwayML Deuce dancing content is optimized for:" >> $GITHUB_STEP_SUMMARY
         echo "- TikTok (AI-powered viral dance potential)" >> $GITHUB_STEP_SUMMARY
         echo "- YouTube Shorts (premium dancing quality)" >> $GITHUB_STEP_SUMMARY
         echo "- Instagram Reels (cinema-grade dance content)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🕺 AI DANCING LEVEL: PROFESSIONAL ✨**" >> $GITHUB_STEP_SUMMARY
+        echo "**🕺 DEUCE DANCING LEVEL: PROFESSIONAL ✨**" >> $GITHUB_STEP_SUMMARY
 
     - name: Job completed
       if: always()
-      run: echo "✅ Ultimate RunwayML Shih Tzu Dancing Content Creation mission completed! 🕺🐕✨"
+      run: echo "✅ Ultimate RunwayML Deuce Human-Like Dancing Content Creation mission completed! 🕺🐕✨"

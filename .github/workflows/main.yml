@@ -59,9 +59,14 @@ jobs:
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
         RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
         CAMERA_MOTION: ${{ github.event.client_payload.runway_motion_settings.camera_motion || '0' }}
-        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '4' }}
-        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '9' }}
-        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '5' }}
+        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '6' }}
+        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '12' }}
+        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '10' }}
+        FPS: ${{ github.event.client_payload.runway_generation_params.fps || '30' }}
+        RESOLUTION: ${{ github.event.client_payload.runway_generation_params.resolution || '1080x1920' }}
+        MODEL: ${{ github.event.client_payload.runway_generation_params.model || 'gen3a_turbo' }}
+        ASPECT_RATIO: ${{ github.event.client_payload.runway_generation_params.aspect_ratio || '9:16' }}
+        WATERMARK: ${{ github.event.client_payload.runway_generation_params.watermark || 'false' }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
@@ -73,6 +78,11 @@ jobs:
         echo "Motion strength: $MOTION_STRENGTH"
         echo "Motion guidance: $MOTION_GUIDANCE"
         echo "Duration: $DURATION seconds"
+        echo "FPS: $FPS"
+        echo "Resolution: $RESOLUTION"
+        echo "Model: $MODEL"
+        echo "Aspect ratio: $ASPECT_RATIO"
+        echo "Watermark: $WATERMARK"
         echo "Animation type: $ANIMATION_TYPE"
         echo "RunwayML API key configured: $([[ -n "$RUNWAYML_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
         
@@ -82,39 +92,76 @@ jobs:
         PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
         
-        # Deuce dancing-specific motion settings for camera control
+        # Enhanced dancing-specific motion settings for camera control
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
         RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
         CAMERA_MOTION: ${{ github.event.client_payload.runway_motion_settings.camera_motion || '0' }}
-        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '4' }}
-        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '9' }}
+        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '6' }}
+        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '12' }}
         MOTION_SEED: ${{ github.event.client_payload.runway_motion_settings.seed }}
         UPSCALE: ${{ github.event.client_payload.runway_motion_settings.upscale || 'true' }}
         
-        # Generation parameters
-        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '5' }}
-        FPS: ${{ github.event.client_payload.runway_generation_params.fps || '24' }}
-        RESOLUTION: ${{ github.event.client_payload.runway_generation_params.resolution || '1280x768' }}
+        # Enhanced generation parameters
+        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '10' }}
+        FPS: ${{ github.event.client_payload.runway_generation_params.fps || '30' }}
+        RESOLUTION: ${{ github.event.client_payload.runway_generation_params.resolution || '1080x1920' }}
         MODEL: ${{ github.event.client_payload.runway_generation_params.model || 'gen3a_turbo' }}
+        ASPECT_RATIO: ${{ github.event.client_payload.runway_generation_params.aspect_ratio || '9:16' }}
+        WATERMARK: ${{ github.event.client_payload.runway_generation_params.watermark || 'false' }}
+        INTERPOLATE: ${{ github.event.client_payload.runway_generation_params.interpolate || 'true' }}
+        LOOP: ${{ github.event.client_payload.runway_generation_params.loop || 'false' }}
         
-        # Motion brush settings for human-like dancing effect
+        # Enhanced motion brush settings for human-like dancing effect
         SUBJECT_AREA: ${{ github.event.client_payload.runway_motion_brush.subject_area || 'deuce_shih_tzu_character' }}
         MOTION_TYPE: ${{ github.event.client_payload.runway_motion_brush.motion_type || 'human_like_dancing_movement' }}
         MOTION_DIRECTION: ${{ github.event.client_payload.runway_motion_brush.motion_direction || 'upright_anthropomorphic_dancing' }}
-        MOTION_INTENSITY: ${{ github.event.client_payload.runway_motion_brush.motion_intensity || 'medium_bouncy_human_like' }}
+        MOTION_INTENSITY: ${{ github.event.client_payload.runway_motion_brush.motion_intensity || 'high_fluid_human_like' }}
         STATIC_AREAS: ${{ github.event.client_payload.runway_motion_brush.static_areas || 'background_plate_edges' }}
+        
+        # Quality enhancer settings
+        MOTION_DESCRIPTORS: ${{ join(github.event.client_payload.quality_enhancers.motion_descriptors, ',') || 'smooth,fluid,continuous,seamless,rhythmic' }}
+        CAMERA_STABILITY: ${{ join(github.event.client_payload.quality_enhancers.camera_stability, ',') || 'static,no_movement,fixed_composition,stable_framing' }}
+        DANCE_QUALITY: ${{ join(github.event.client_payload.quality_enhancers.dance_quality, ',') || 'professional_choreography,human_like_gestures,anthropomorphic_behavior' }}
+        VISUAL_QUALITY: ${{ join(github.event.client_payload.quality_enhancers.visual_quality, ',') || 'photorealistic,natural_lighting,cinematic_quality' }}
+        
+        # Technical specs
+        STYLE: ${{ github.event.client_payload.technical_specs.style || 'realistic_photography_natural_lighting_photorealistic' }}
+        LIGHTING: ${{ github.event.client_payload.technical_specs.lighting || 'natural_warm_professional_food_photography_cinematic' }}
+        COMPOSITION: ${{ github.event.client_payload.technical_specs.composition || 'centered_close_up_frontal_stable_framing' }}
+        CHARACTER: ${{ github.event.client_payload.technical_specs.character || 'deuce_the_shih_tzu_anthropomorphic_dancer_fluid_motion' }}
+        MOTION_QUALITY: ${{ github.event.client_payload.technical_specs.motion_quality || 'smooth_seamless_professional_choreography' }}
+        
+        # Motion areas for targeted animation
+        PRIMARY_MOTION: ${{ github.event.client_payload.motion_areas.primary_motion || 'deuce_upright_human_like_dancing_movement_smooth_fluid' }}
+        SECONDARY_MOTION: ${{ github.event.client_payload.motion_areas.secondary_motion || 'front_paws_as_arms_human_gestures_continuous_flow' }}
+        TERTIARY_MOTION: ${{ github.event.client_payload.motion_areas.tertiary_motion || 'head_bobbing_rhythmic_bouncing_seamless_motion' }}
+        STATIC_MOTION_AREAS: ${{ github.event.client_payload.motion_areas.static_areas || 'background_plate_table_edges' }}
+        
+        # Dancing sequence phases
+        PHASE_1: ${{ github.event.client_payload.dancing_sequence.phase_1 || 'deuce_stands_upright_on_hind_legs_like_human_smooth_transition_0_to_2s' }}
+        PHASE_2: ${{ github.event.client_payload.dancing_sequence.phase_2 || 'human_like_dancing_swaying_arm_movements_fluid_motion_2_to_4s' }}
+        PHASE_3: ${{ github.event.client_payload.dancing_sequence.phase_3 || 'upright_dancing_paws_as_arms_rhythmic_movement_continuous_4_to_6s' }}
+        PHASE_4: ${{ github.event.client_payload.dancing_sequence.phase_4 || 'complex_human_dance_moves_while_standing_upright_seamless_6_to_8s' }}
+        PHASE_5: ${{ github.event.client_payload.dancing_sequence.phase_5 || 'celebrating_finish_pose_upright_paws_raised_smooth_8_to_10s' }}
         
         # API keys
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
-        echo "🎬 Generating REAL animated Deuce dancing video with RunwayML..."
-        echo "🕺 Human-like dancing animation with STATIC camera"
+        echo "🎬 Generating ENHANCED animated Deuce dancing video with RunwayML..."
+        echo "🕺 Human-like dancing animation with STATIC camera and enhanced motion quality"
         echo "Animation type: $ANIMATION_TYPE"
         echo "Camera motion: $CAMERA_MOTION (0 = completely static)"
-        echo "Using Deuce dancing motion prompt: $DANCING_MOTION_PROMPT"
+        echo "Motion strength: $MOTION_STRENGTH (enhanced for better dance moves)"
+        echo "Motion guidance: $MOTION_GUIDANCE (increased precision)"
+        echo "Duration: $DURATION seconds (extended for better motion flow)"
+        echo "Resolution: $RESOLUTION (optimized for social media)"
+        echo "FPS: $FPS (smooth motion)"
+        echo "Model: $MODEL"
+        echo "Using enhanced Deuce dancing motion prompt: $DANCING_MOTION_PROMPT"
         echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
+        echo "Quality enhancers: Motion[$MOTION_DESCRIPTORS], Camera[$CAMERA_STABILITY], Dance[$DANCE_QUALITY]"
         
         # Run the enhanced RunwayML video generator
         python image_generator.py
@@ -187,9 +234,9 @@ jobs:
             new_height = int(height * scale)
             img_resized = cv2.resize(img, (new_width, new_height))
             
-            # Create simple frames
+            # Create simple frames for longer duration
             frames = []
-            for i in range(150):  # 5 seconds at 30fps
+            for i in range(300):  # 10 seconds at 30fps (matching new duration)
                 frame_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
                 frames.append(frame_rgb)
             
@@ -294,7 +341,7 @@ jobs:
                     deuce_texts = {
                         'emergence': "✨ Deuce discovers amazing food! So precious! 🐕💫",
                         'eating': "😋 Watch Deuce enjoy delicious food! So adorable! 🍽️❤️",
-                        'dancing': "🎵 Deuce dances like a human! This little angel has the best moves! 💃🐕"
+                        'dancing': "🎵 Deuce dances like a human! This little angel has the smoothest moves! 💃🐕✨"
                     }
                     self.recipe_text = deuce_texts.get(animation_type, "🐕 Deuce's most adorable human-like dancing adventure! ✨")
                     
@@ -386,13 +433,13 @@ jobs:
                     '-c:a', 'aac',
                     '-b:a', '128k',
                     '-r', '30',
-                    '-shortest' if self.audio_file else '-t', '8',
+                    '-shortest' if self.audio_file else '-t', '10',  # Updated to 10 seconds
                     '-movflags', '+faststart',  # Optimize for web playback
                     self.output_file
                 ])
                 
                 try:
-                    print("🚀 Executing RunwayML video enhancement...")
+                    print("🚀 Executing enhanced RunwayML video processing...")
                     result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
                     
                     if result.returncode == 0:
@@ -428,10 +475,11 @@ jobs:
                         duration = float(info['format']['duration'])
                         size_mb = os.path.getsize(self.output_file) / (1024*1024)
                         
-                        print(f"📊 RunwayML Deuce Dancing Video Analysis:")
+                        print(f"📊 Enhanced RunwayML Deuce Dancing Video Analysis:")
                         print(f"   Duration: {duration:.1f} seconds")
                         print(f"   File Size: {size_mb:.1f} MB")
                         print(f"   Format: MP4 (1080x1920)")
+                        print(f"   Quality: Professional grade with enhanced motion")
                         print(f"   Status: Ready for viral success! 🎬✨")
                         
                 except Exception as e:
@@ -439,7 +487,7 @@ jobs:
                     
             def process_video(self):
                 """Main processing pipeline"""
-                print("🎬 STARTING RUNWAYML DEUCE DANCING VIDEO PROCESSING PIPELINE")
+                print("🎬 STARTING ENHANCED RUNWAYML DEUCE DANCING VIDEO PROCESSING PIPELINE")
                 print("=" * 50)
                 
                 if not self.find_files():
@@ -450,7 +498,7 @@ jobs:
                 success = self.create_professional_video()
                 
                 if success:
-                    print("🎉 RUNWAYML DEUCE DANCING MASTERPIECE CREATED!")
+                    print("🎉 ENHANCED RUNWAYML DEUCE DANCING MASTERPIECE CREATED!")
                     print(f"📱 File: {self.output_file}")
                     return True
                 else:
@@ -469,7 +517,7 @@ jobs:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'dancing' }}
       run: |
-        echo "🎬 Launching advanced RunwayML Deuce dancing video processing..."
+        echo "🎬 Launching enhanced RunwayML Deuce dancing video processing..."
         python3 advanced_video_editor.py
 
     - name: Upload generated videos
@@ -497,32 +545,38 @@ jobs:
     - name: Create Epic RunwayML Deuce Dancing Summary
       if: always()
       run: |
-        echo "## 🕺 RUNWAYML DEUCE DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
+        echo "## 🕺 ENHANCED RUNWAYML DEUCE DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Your Professional AI Dancing Video Package:" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Your Professional AI Dancing Video Package (Enhanced):" >> $GITHUB_STEP_SUMMARY
         
         if [ -f "tiktok_masterpiece.mp4" ]; then
           VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
           ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'dancing' }}"
-          echo "- 🎥 **RunwayML Deuce Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🤖 **AI Technology:** RunwayML Gen-3a Turbo (Real Animation)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎯 **Camera Control:** Static positioning (no drift)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🕺 **Star:** Deuce the Shih Tzu dancing like a human with centered framing" >> $GITHUB_STEP_SUMMARY
-          echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** Professional 5-second videos" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎬 **Quality:** Cinema-grade AI animation" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎨 **Movement:** Human-like upright dancing with arm movements" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎥 **Enhanced RunwayML Deuce Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 **AI Technology:** RunwayML Gen-3a Turbo with Enhanced Motion Quality" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **Camera Control:** Static positioning with enhanced stability" >> $GITHUB_STEP_SUMMARY
+          echo "- 🕺 **Star:** Deuce the Shih Tzu with smooth fluid human-like dancing" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Format:** 1080x1920 (Perfect 9:16 optimized)" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ **Duration:** Extended 10-second professional videos" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎬 **Quality:** Cinema-grade AI animation with motion enhancements" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Movement:** Enhanced human-like dancing with professional choreography" >> $GITHUB_STEP_SUMMARY
+          echo "- ⚡ **Motion Settings:** Strength: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '6' }}, Guidance: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '12' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **FPS:** ${{ github.event.client_payload.runway_generation_params.fps || '30' }} fps for ultra-smooth motion" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🎯 Ready for Viral Success!" >> $GITHUB_STEP_SUMMARY
-        echo "Your professional RunwayML Deuce dancing content is optimized for:" >> $GITHUB_STEP_SUMMARY
-        echo "- TikTok (AI-powered viral dance potential)" >> $GITHUB_STEP_SUMMARY
-        echo "- YouTube Shorts (premium dancing quality)" >> $GITHUB_STEP_SUMMARY
-        echo "- Instagram Reels (cinema-grade dance content)" >> $GITHUB_STEP_SUMMARY
+        echo "### 🎯 Ready for Viral Success with Enhanced Quality!" >> $GITHUB_STEP_SUMMARY
+        echo "Your enhanced professional RunwayML Deuce dancing content features:" >> $GITHUB_STEP_SUMMARY
+        echo "- ✨ Smooth fluid motion with seamless transitions" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎭 Professional choreography-style movements" >> $GITHUB_STEP_SUMMARY
+        echo "- 📷 Static camera with enhanced stability controls" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎨 Photorealistic quality with cinematic lighting" >> $GITHUB_STEP_SUMMARY
+        echo "- 🎵 Rhythmic tempo matching for perfect dance synchronization" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🕺 DEUCE DANCING LEVEL: PROFESSIONAL ✨**" >> $GITHUB_STEP_SUMMARY
+        echo "**Optimized for platforms:** TikTok • YouTube Shorts • Instagram Reels" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**🕺 DEUCE DANCING LEVEL: PROFESSIONAL ENHANCED ✨**" >> $GITHUB_STEP_SUMMARY
 
     - name: Job completed
       if: always()
-      run: echo "✅ Ultimate RunwayML Deuce Human-Like Dancing Content Creation mission completed! 🕺🐕✨"
+      run: echo "✅ Ultimate Enhanced RunwayML Deuce Human-Like Dancing Content Creation mission completed! 🕺🐕✨"

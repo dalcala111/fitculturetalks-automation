@@ -37,14 +37,21 @@ class EnhancedRunwayMLVideoBot:
         self.camera_motion = int(os.getenv('CAMERA_MOTION', '0'))  # 0 = static camera
         self.motion_strength = int(os.getenv('MOTION_STRENGTH', '6'))  # Enhanced from 4 to 6
         self.motion_guidance = int(os.getenv('MOTION_GUIDANCE', '12'))  # Enhanced from 9 to 12
-        self.motion_seed = os.getenv('MOTION_SEED', str(random.randint(1, 1000000)))
+        motion_seed_env = os.getenv('MOTION_SEED', '')
+        if motion_seed_env and motion_seed_env.strip():
+            try:
+                self.motion_seed = int(motion_seed_env)
+            except ValueError:
+                self.motion_seed = random.randint(1, 1000000)
+        else:
+            self.motion_seed = random.randint(1, 1000000)
         self.upscale = os.getenv('UPSCALE', 'true').lower() == 'true'
         
         # Enhanced generation parameters
         self.duration = int(os.getenv('DURATION', '10'))  # Extended to 10 seconds
         self.fps = int(os.getenv('FPS', '30'))  # Enhanced to 30 FPS
         self.resolution = os.getenv('RESOLUTION', '1080x1920')  # Vertical format
-        self.model = os.getenv('MODEL', 'gen3a_turbo')
+        self.model = os.getenv('MODEL', 'gen3a')  # Fixed model name
         self.aspect_ratio = os.getenv('ASPECT_RATIO', '9:16')  # Vertical
         self.watermark = os.getenv('WATERMARK', 'false').lower() == 'true'
         self.interpolate = os.getenv('INTERPOLATE', 'true').lower() == 'true'
@@ -203,7 +210,7 @@ class EnhancedRunwayMLVideoBot:
                 "model": self.model,
                 "aspectRatio": self.aspect_ratio,  # Use enhanced aspect ratio
                 "duration": min(self.duration, 10),  # Cap at 10 seconds for API limits
-                "seed": int(self.motion_seed),
+                "seed": self.motion_seed,  # Now properly handled as int
                 "watermark": self.watermark,
                 "interpolate": self.interpolate,
                 "loop": self.loop

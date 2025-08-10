@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RUNWAYML AI VIDEO GENERATION BOT
-Creates REAL animated Shih Tzu dancing videos with actual movement and camera control
+Creates REAL animated Deuce the Shih Tzu dancing videos with human-like movement and camera control
 """
 
 import time
@@ -24,7 +24,7 @@ class RunwayMLVideoBot:
     
     def __init__(self):
         # Basic parameters
-        self.prompt = os.getenv('PROMPT', 'adorable Shih Tzu dancing next to delicious trending food dish')
+        self.prompt = os.getenv('PROMPT', 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish')
         self.animation_type = os.getenv('ANIMATION_TYPE', 'dancing')
         self.runwayml_api_key = os.getenv('RUNWAYML_API_KEY')
         self.webhook_url = os.getenv('N8N_WEBHOOK')
@@ -46,11 +46,11 @@ class RunwayMLVideoBot:
         self.resolution = os.getenv('RESOLUTION', '1280x768')
         self.model = os.getenv('MODEL', 'gen3a_turbo')
         
-        # Motion brush parameters for dancing effect
-        self.subject_area = os.getenv('SUBJECT_AREA', 'shih_tzu_character')
-        self.motion_type = os.getenv('MOTION_TYPE', 'dancing_movement')
-        self.motion_direction = os.getenv('MOTION_DIRECTION', 'bouncing_rhythmic')
-        self.motion_intensity = os.getenv('MOTION_INTENSITY', 'medium_bouncy')
+        # Motion brush parameters for human-like dancing effect
+        self.subject_area = os.getenv('SUBJECT_AREA', 'deuce_shih_tzu_character')
+        self.motion_type = os.getenv('MOTION_TYPE', 'human_like_dancing_movement')
+        self.motion_direction = os.getenv('MOTION_DIRECTION', 'upright_anthropomorphic_dancing')
+        self.motion_intensity = os.getenv('MOTION_INTENSITY', 'medium_bouncy_human_like')
         self.static_areas = os.getenv('STATIC_AREAS', 'background_plate_edges')
         
         logger.info(f"🎯 Camera Motion: {self.camera_motion} (0=static)")
@@ -62,33 +62,33 @@ class RunwayMLVideoBot:
         
         # Use the enhanced prompt from n8n if available
         if self.dancing_motion_prompt:
-            logger.info("✅ Using enhanced dancing motion prompt from n8n")
+            logger.info("✅ Using enhanced Deuce dancing motion prompt from n8n")
             return self.dancing_motion_prompt
         
-        # SIMPLIFIED prompts that actually work - focus on dancing action
+        # SIMPLIFIED prompts that actually work - focus on Deuce's human-like dancing action
         simple_realistic_prompts = {
             'dancing': [
-                "Adorable Shih Tzu doing cute dance moves next to elegantly plated trending food on white ceramic plate, realistic bouncing movements, head bobbing to rhythm, tail wagging, joyful expressions, photorealistic quality, static camera",
+                "Deuce the adorable Shih Tzu standing completely upright on hind legs like a human person, dancing with front paws moving exactly like human arms next to elegantly plated trending food on white ceramic plate, anthropomorphic human-like dance movements, swaying and bouncing like a person, realistic photography, photorealistic quality, static camera",
                 
-                "Tiny fluffy Shih Tzu dancing on hind legs next to fancy plated gourmet food, natural rhythmic movements, authentic pet behavior, realistic dancing motions, natural lighting, static camera position",
+                "Deuce the tiny fluffy Shih Tzu dancing upright like a human next to fancy plated gourmet food, using front paws like human arms, standing on hind legs throughout like a person, natural rhythmic movements, anthropomorphic dancing behavior, realistic lighting, static camera position",
                 
-                "Cute Shih Tzu playfully bouncing and dancing around beautifully plated food, natural dog dancing behavior, realistic movements, happy expressions, photorealistic"
+                "Deuce the cute Shih Tzu doing human-like dance moves while standing upright on back legs like a person around beautifully plated food, front paws moving like arms, human-style dancing behavior, realistic movements, happy expressions, photorealistic"
             ],
             
             'eating': [
-                "Shih Tzu puppy naturally eating trending food from elegant plate, realistic chewing motions, authentic pet behavior, food on whiskers and face, static camera, photorealistic quality",
+                "Deuce the Shih Tzu puppy naturally eating trending food from elegant plate, realistic chewing motions, authentic pet behavior, food on whiskers and face, static camera, photorealistic quality",
                 
-                "Adorable Shih Tzu enjoying delicious meal, natural eating movements, realistic head positioning while eating, elegant food presentation, natural lighting",
+                "Deuce the adorable Shih Tzu enjoying delicious meal, natural eating movements, realistic head positioning while eating, elegant food presentation, natural lighting",
                 
-                "Tiny Shih Tzu messily eating from fancy white ceramic plate, authentic dog eating behavior, realistic movements, food getting everywhere"
+                "Deuce the tiny Shih Tzu messily eating from fancy white ceramic plate, authentic dog eating behavior, realistic movements, food getting everywhere"
             ],
             
             'emergence': [
-                "Adorable Shih Tzu naturally approaching delicious trending food from elegant white ceramic plate, realistic curiosity movements, natural head movements, photorealistic quality, static camera",
+                "Deuce the adorable Shih Tzu naturally approaching delicious trending food from elegant white ceramic plate, realistic curiosity movements, natural head movements, photorealistic quality, static camera",
                 
-                "Tiny fluffy Shih Tzu discovering gourmet meal on fancy plate, authentic pet excitement, realistic tail wagging, natural lighting, static camera position",
+                "Deuce the tiny fluffy Shih Tzu discovering gourmet meal on fancy plate, authentic pet excitement, realistic tail wagging, natural lighting, static camera position",
                 
-                "Cute Shih Tzu excitedly approaching beautifully plated food, natural dog curiosity, realistic movements, photorealistic quality"
+                "Deuce the cute Shih Tzu excitedly approaching beautifully plated food, natural dog curiosity, realistic movements, photorealistic quality"
             ]
         }
         
@@ -96,7 +96,7 @@ class RunwayMLVideoBot:
         selected_prompts = simple_realistic_prompts.get(self.animation_type, simple_realistic_prompts['dancing'])
         enhanced_prompt = random.choice(selected_prompts)
         
-        logger.info("✅ Using simplified high-quality dancing prompt")
+        logger.info("✅ Using simplified high-quality Deuce dancing prompt")
         return enhanced_prompt
     
     def generate_runwayml_video(self):
@@ -231,7 +231,7 @@ class RunwayMLVideoBot:
             # Simplified payload for better results
             simple_payload = {
                 "promptImage": data_uri,
-                "promptText": "Cute Shih Tzu dog dancing naturally, realistic movement, static camera",
+                "promptText": "Deuce the Shih Tzu dog dancing like a human upright, realistic movement, static camera",
                 "model": "gen3a_turbo",
                 "aspectRatio": "16:9",
                 "duration": 5,  # 5 seconds - valid duration
@@ -346,7 +346,7 @@ class RunwayMLVideoBot:
             with open("final_animation.mp4", 'wb') as f:
                 f.write(video_data)
             
-            logger.info("🎬 ENHANCED AI DANCING VIDEO GENERATED WITH CAMERA CONTROL!")
+            logger.info("🎬 ENHANCED DEUCE DANCING VIDEO GENERATED WITH CAMERA CONTROL!")
             logger.info("📱 Ready for social media upload!")
             
             return True
@@ -356,7 +356,7 @@ class RunwayMLVideoBot:
             return False
     
     def generate_dalle_base_image(self, enhanced_prompt):
-        """Generate base image using DALL-E with IMPROVED setup for dancing animation"""
+        """Generate base image using DALL-E with IMPROVED setup for Deuce's human-like dancing animation"""
         try:
             openai_api_key = os.getenv('OPENAI_API_KEY')
             if not openai_api_key:
@@ -368,13 +368,13 @@ class RunwayMLVideoBot:
                 "Content-Type": "application/json"
             }
             
-            # IMPROVED base image prompt - dog ready to dance
+            # IMPROVED base image prompt - Deuce ready to dance like human
             if 'dancing' in self.animation_type:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes standing next to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog appears energetic and ready to dance, positioned naturally beside the fancy plated food. Professional food photography lighting, photorealistic quality, shallow depth of field. The scene captures the moment before the dog starts dancing."
+                dalle_prompt = "Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes, standing upright on hind legs like a human person next to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce appears ready to dance like a human, front paws positioned like human arms, standing in anthropomorphic upright pose beside the fancy plated food. Professional food photography lighting, photorealistic quality, shallow depth of field. The scene captures the moment before Deuce starts human-like dancing."
             elif 'eating' in self.animation_type:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position. Professional food photography lighting, photorealistic quality, shallow depth of field."
+                dalle_prompt = "Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position. Professional food photography lighting, photorealistic quality, shallow depth of field."
             else:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, natural lighting, photorealistic quality, high detail."
+                dalle_prompt = "Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, natural lighting, photorealistic quality, high detail."
             
             payload = {
                 "model": "dall-e-3",
@@ -385,7 +385,7 @@ class RunwayMLVideoBot:
                 "style": "vivid"
             }
             
-            logger.info("🎨 Generating enhanced base image for dancing...")
+            logger.info("🎨 Generating enhanced base image for Deuce's dancing...")
             logger.info(f"🖼️ DALL-E prompt: {dalle_prompt[:100]}...")
             
             response = requests.post(
@@ -430,13 +430,13 @@ class RunwayMLVideoBot:
             logger.info(f"🎭 Animation type: {self.animation_type}")
             logger.info(f"📝 Base prompt: {self.prompt}")
             logger.info(f"🎯 Camera control: STATIC (motion={self.camera_motion})")
-            logger.info(f"🕺 Concept: Adorable Shih Tzu dancing next to fancy plated food")
+            logger.info(f"🕺 Concept: Deuce the Shih Tzu dancing like a human next to fancy plated food")
             
             success = self.generate_runwayml_video()
             
             if success:
-                logger.info("✅ ENHANCED AI DANCING VIDEO GENERATION ACCOMPLISHED!")
-                logger.info("🎯 Camera stayed static, dog remained centered!")
+                logger.info("✅ ENHANCED DEUCE DANCING VIDEO GENERATION ACCOMPLISHED!")
+                logger.info("🎯 Camera stayed static, Deuce remained centered!")
                 return True
             else:
                 logger.error("❌ Video generation failed")
@@ -449,8 +449,8 @@ class RunwayMLVideoBot:
 def main():
     """Main entry point for enhanced RunwayML video bot"""
     logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION BOT")
-    logger.info("🚀 Creating REAL animated Shih Tzu dancing videos with camera control")
-    logger.info("🕺 Featuring adorable dance moves next to fancy plated food")
+    logger.info("🚀 Creating REAL animated Deuce the Shih Tzu dancing videos with camera control")
+    logger.info("🕺 Featuring human-like dance moves next to fancy plated food")
     
     if os.getenv('GITHUB_ACTIONS'):
         logger.info("☁️ Operating in GitHub Actions environment")
@@ -460,10 +460,10 @@ def main():
     success = video_bot.run_generation_mission()
     
     if success:
-        logger.info("✅ ENHANCED AI DANCING VIDEO MISSION ACCOMPLISHED!")
+        logger.info("✅ ENHANCED DEUCE DANCING VIDEO MISSION ACCOMPLISHED!")
         sys.exit(0)
     else:
-        logger.error("❌ ENHANCED AI DANCING VIDEO MISSION FAILED!")
+        logger.error("❌ ENHANCED DEUCE DANCING VIDEO MISSION FAILED!")
         sys.exit(1)
 
 if __name__ == "__main__":

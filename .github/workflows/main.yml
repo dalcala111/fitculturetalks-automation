@@ -1,4 +1,4 @@
-name: "Ultimate RunwayML Shih Tzu Animation Generator"
+name: "Ultimate RunwayML Shih Tzu Dancing Generator"
 on:
   repository_dispatch:
     types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video]
@@ -7,18 +7,18 @@ on:
       prompt:
         description: 'Image generation prompt'
         required: true
-        default: 'adorable Shih Tzu with delicious trending food dish'
+        default: 'adorable Shih Tzu dancing next to delicious trending food dish'
       animation_type:
-        description: 'Animation type (emergence, eating, dancing)'
+        description: 'Animation type (dancing, eating, emergence)'
         required: false
-        default: 'eating'
+        default: 'dancing'
 jobs:
   runwayml-shih-tzu-generator:
     runs-on: ubuntu-latest
     
     steps:
     - name: Set up job
-      run: echo "🎬 Starting Ultimate RunwayML Shih Tzu Animation mission"
+      run: echo "🎬 Starting Ultimate RunwayML Shih Tzu Dancing mission"
       
     - name: Checkout code
       uses: actions/checkout@v4
@@ -52,40 +52,77 @@ jobs:
         echo "📦 Installed packages:"
         pip list
 
-    - name: Debug Prompt Input
+    - name: Debug Enhanced Dancing Payload
       env:
-        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
+        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu dancing next to delicious trending food dish' }}
+        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
+        DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
+        RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
+        CAMERA_MOTION: ${{ github.event.client_payload.runway_motion_settings.camera_motion || '0' }}
+        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '4' }}
+        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '9' }}
+        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '5' }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       run: |
-        echo "🔍 Debug: Checking inputs..."
-        echo "Repository dispatch prompt: ${{ github.event.client_payload.prompt }}"
-        echo "Manual input prompt: ${{ github.event.inputs.prompt }}"
-        echo "Final PROMPT: $PROMPT"
+        echo "🔍 Debug: Enhanced Dancing Parameters..."
+        echo "Primary prompt: $PROMPT"
+        echo "Dancing motion prompt: $DANCING_MOTION_PROMPT"
+        echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
+        echo "Camera motion: $CAMERA_MOTION (0 = static)"
+        echo "Motion strength: $MOTION_STRENGTH"
+        echo "Motion guidance: $MOTION_GUIDANCE"
+        echo "Duration: $DURATION seconds"
         echo "Animation type: $ANIMATION_TYPE"
-        echo "Content category: ${{ github.event.client_payload.content_category }}"
         echo "RunwayML API key configured: $([[ -n "$RUNWAYML_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
-        echo "OpenAI API key configured: $([[ -n "$OPENAI_API_KEY" ]] && echo "✅ Yes" || echo "❌ No")"
         
-    - name: Run Enhanced RunwayML Video Generator
+    - name: Run Enhanced RunwayML Dancing Video Generator
       env:
-        PROMPT: ${{ github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu with delicious trending food dish' }}
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
+        # Primary prompt settings
+        PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'adorable Shih Tzu dancing next to delicious trending food dish' }}
+        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
+        
+        # Dancing-specific motion settings for camera control
+        DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
+        RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
+        CAMERA_MOTION: ${{ github.event.client_payload.runway_motion_settings.camera_motion || '0' }}
+        MOTION_STRENGTH: ${{ github.event.client_payload.runway_motion_settings.motion_strength || '4' }}
+        MOTION_GUIDANCE: ${{ github.event.client_payload.runway_motion_settings.motion_guidance || '9' }}
+        MOTION_SEED: ${{ github.event.client_payload.runway_motion_settings.seed }}
+        UPSCALE: ${{ github.event.client_payload.runway_motion_settings.upscale || 'true' }}
+        
+        # Generation parameters
+        DURATION: ${{ github.event.client_payload.runway_generation_params.duration || '5' }}
+        FPS: ${{ github.event.client_payload.runway_generation_params.fps || '24' }}
+        RESOLUTION: ${{ github.event.client_payload.runway_generation_params.resolution || '1280x768' }}
+        MODEL: ${{ github.event.client_payload.runway_generation_params.model || 'gen3a_turbo' }}
+        
+        # Motion brush settings for dancing effect
+        SUBJECT_AREA: ${{ github.event.client_payload.runway_motion_brush.subject_area || 'shih_tzu_character' }}
+        MOTION_TYPE: ${{ github.event.client_payload.runway_motion_brush.motion_type || 'dancing_movement' }}
+        MOTION_DIRECTION: ${{ github.event.client_payload.runway_motion_brush.motion_direction || 'bouncing_rhythmic' }}
+        MOTION_INTENSITY: ${{ github.event.client_payload.runway_motion_brush.motion_intensity || 'medium_bouncy' }}
+        STATIC_AREAS: ${{ github.event.client_payload.runway_motion_brush.static_areas || 'background_plate_edges' }}
+        
+        # API keys
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
         OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         N8N_WEBHOOK: ${{ secrets.N8N_WEBHOOK }}
       run: |
-        echo "🎬 Generating REAL animated Shih Tzu video with RunwayML..."
+        echo "🎬 Generating REAL animated Shih Tzu dancing video with RunwayML..."
+        echo "🕺 Dancing animation with STATIC camera"
         echo "Animation type: $ANIMATION_TYPE"
-        echo "Using prompt: $PROMPT"
-        # Run the RunwayML video generator
+        echo "Camera motion: $CAMERA_MOTION (0 = completely static)"
+        echo "Using dancing motion prompt: $DANCING_MOTION_PROMPT"
+        echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
+        
+        # Run the enhanced RunwayML video generator
         python image_generator.py
         
         # Verify video was created
         echo "📹 Checking generated videos..."
         if ls final_animation.mp4 1> /dev/null 2>&1; then
-          echo "✅ RunwayML video generated successfully!"
+          echo "✅ RunwayML dancing video generated successfully!"
           ls -la final_animation.mp4
         elif ls runwayml_generation_*.mp4 1> /dev/null 2>&1; then
           echo "✅ RunwayML video files found!"
@@ -152,7 +189,7 @@ jobs:
             
             # Create simple frames
             frames = []
-            for i in range(120):  # 4 seconds at 30fps
+            for i in range(150):  # 5 seconds at 30fps
                 frame_rgb = cv2.cvtColor(img_resized, cv2.COLOR_BGR2RGB)
                 frames.append(frame_rgb)
             
@@ -167,7 +204,7 @@ jobs:
 
     - name: Generate Backup Animation (If Needed)
       env:
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'eating' }}
+        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
       run: |
         echo "🎬 Checking if backup animation is needed..."
         
@@ -248,18 +285,18 @@ jobs:
                 """Extract recipe text for overlay"""
                 # Get recipe text from GitHub Actions environment
                 recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
-                animation_type = os.environ.get('ANIMATION_TYPE', 'eating')
+                animation_type = os.environ.get('ANIMATION_TYPE', 'dancing')
                 
                 if recipe_from_payload:
                     self.recipe_text = recipe_from_payload
                 else:
                     # Generate cute Shih Tzu text based on animation type
                     shih_tzu_texts = {
-                        'emergence': "✨ Magical Shih Tzu appears! The most adorable surprise! 🐕💫",
+                        'emergence': "✨ Adorable Shih Tzu discovers amazing food! So precious! 🐕💫",
                         'eating': "😋 Watch this precious Shih Tzu enjoy delicious food! So adorable! 🍽️❤️",
                         'dancing': "🎵 Dancing Shih Tzu! This little angel has the best moves! 💃🐕"
                     }
-                    self.recipe_text = shih_tzu_texts.get(animation_type, "🐕 The most adorable Shih Tzu food adventure! ✨")
+                    self.recipe_text = shih_tzu_texts.get(animation_type, "🐕 The most adorable Shih Tzu dancing adventure! ✨")
                     
                 print(f"📝 Video text: {self.recipe_text[:50]}...")
                 
@@ -287,7 +324,7 @@ jobs:
                 
             def create_professional_video(self):
                 """Create professional-quality RunwayML enhanced video"""
-                print("🎬 Creating professional RunwayML Shih Tzu video...")
+                print("🎬 Creating professional RunwayML Shih Tzu dancing video...")
                 
                 formatted_text = self.create_text_overlay()
                 
@@ -359,7 +396,7 @@ jobs:
                     result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
                     
                     if result.returncode == 0:
-                        print("✅ Professional RunwayML video created successfully!")
+                        print("✅ Professional RunwayML dancing video created successfully!")
                         self.analyze_output()
                         return True
                     else:
@@ -391,7 +428,7 @@ jobs:
                         duration = float(info['format']['duration'])
                         size_mb = os.path.getsize(self.output_file) / (1024*1024)
                         
-                        print(f"📊 RunwayML Video Analysis:")
+                        print(f"📊 RunwayML Dancing Video Analysis:")
                         print(f"   Duration: {duration:.1f} seconds")
                         print(f"   File Size: {size_mb:.1f} MB")
                         print(f"   Format: MP4 (1080x1920)")
@@ -402,7 +439,7 @@ jobs:
                     
             def process_video(self):
                 """Main processing pipeline"""
-                print("🎬 STARTING RUNWAYML VIDEO PROCESSING PIPELINE")
+                print("🎬 STARTING RUNWAYML DANCING VIDEO PROCESSING PIPELINE")
                 print("=" * 50)
                 
                 if not self.find_files():
@@ -413,7 +450,7 @@ jobs:
                 success = self.create_professional_video()
                 
                 if success:
-                    print("🎉 RUNWAYML MASTERPIECE CREATED!")
+                    print("🎉 RUNWAYML DANCING MASTERPIECE CREATED!")
                     print(f"📱 File: {self.output_file}")
                     return True
                 else:
@@ -430,26 +467,26 @@ jobs:
     - name: Execute Advanced RunwayML Video Processing
       env:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
-        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'eating' }}
+        ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'dancing' }}
       run: |
-        echo "🎬 Launching advanced RunwayML video processing..."
+        echo "🎬 Launching advanced RunwayML dancing video processing..."
         python3 advanced_video_editor.py
 
     - name: Upload generated videos
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: runwayml-videos
+        name: runwayml-dancing-videos
         path: |
           runwayml_generation_*.mp4
           final_animation.mp4
         retention-days: 30
 
-    - name: Upload RunwayML Masterpiece
+    - name: Upload RunwayML Dancing Masterpiece
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: tiktok-masterpiece
+        name: dancing-tiktok-masterpiece
         path: |
           tiktok_masterpiece.mp4
           final_animation.mp4
@@ -457,34 +494,35 @@ jobs:
           *.wav
         retention-days: 30
 
-    - name: Create Epic RunwayML Summary
+    - name: Create Epic RunwayML Dancing Summary
       if: always()
       run: |
-        echo "## 🎬 RUNWAYML SHIH TZU MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
+        echo "## 🕺 RUNWAYML SHIH TZU DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Your Professional AI Video Package:" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Your Professional AI Dancing Video Package:" >> $GITHUB_STEP_SUMMARY
         
         if [ -f "tiktok_masterpiece.mp4" ]; then
           VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
-          ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'eating' }}"
-          echo "- 🎥 **RunwayML Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🤖 **AI Technology:** RunwayML Gen-2 (Real Animation)" >> $GITHUB_STEP_SUMMARY
-          echo "- 🐕 **Animation Type:** $ANIMATION_TYPE with natural movement" >> $GITHUB_STEP_SUMMARY
+          ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'dancing' }}"
+          echo "- 🎥 **RunwayML Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🤖 **AI Technology:** RunwayML Gen-3a Turbo (Real Animation)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 **Camera Control:** Static positioning (no drift)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🕺 **Animation Type:** Adorable Shih Tzu dancing with centered framing" >> $GITHUB_STEP_SUMMARY
           echo "- 📱 **Format:** 1080x1920 (Perfect 9:16)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** Professional 4-8 second videos" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ **Duration:** Professional 5-second videos" >> $GITHUB_STEP_SUMMARY
           echo "- 🎬 **Quality:** Cinema-grade AI animation" >> $GITHUB_STEP_SUMMARY
-          echo "- 🎨 **Movement:** Real Shih Tzu eating, dancing, and emerging" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎨 **Movement:** Realistic dancing moves with rhythm and joy" >> $GITHUB_STEP_SUMMARY
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "### 🎯 Ready for Viral Success!" >> $GITHUB_STEP_SUMMARY
-        echo "Your professional RunwayML content is optimized for:" >> $GITHUB_STEP_SUMMARY
-        echo "- TikTok (AI-powered viral potential)" >> $GITHUB_STEP_SUMMARY
-        echo "- YouTube Shorts (premium quality)" >> $GITHUB_STEP_SUMMARY
-        echo "- Instagram Reels (cinema-grade content)" >> $GITHUB_STEP_SUMMARY
+        echo "Your professional RunwayML dancing content is optimized for:" >> $GITHUB_STEP_SUMMARY
+        echo "- TikTok (AI-powered viral dance potential)" >> $GITHUB_STEP_SUMMARY
+        echo "- YouTube Shorts (premium dancing quality)" >> $GITHUB_STEP_SUMMARY
+        echo "- Instagram Reels (cinema-grade dance content)" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🤖 AI ANIMATION LEVEL: PROFESSIONAL ✨**" >> $GITHUB_STEP_SUMMARY
+        echo "**🕺 AI DANCING LEVEL: PROFESSIONAL ✨**" >> $GITHUB_STEP_SUMMARY
 
     - name: Job completed
       if: always()
-      run: echo "✅ Ultimate RunwayML Shih Tzu Content Creation mission completed! 🎬🐕✨"
+      run: echo "✅ Ultimate RunwayML Shih Tzu Dancing Content Creation mission completed! 🕺🐕✨"

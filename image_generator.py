@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RUNWAYML AI VIDEO GENERATION BOT
-Creates REAL animated Shih Tzu videos with actual movement and camera control
+Creates REAL animated Shih Tzu dancing videos with actual movement and camera control
 """
 
 import time
@@ -24,55 +24,55 @@ class RunwayMLVideoBot:
     
     def __init__(self):
         # Basic parameters
-        self.prompt = os.getenv('PROMPT', 'adorable Shih Tzu eating delicious ramen noodles')
-        self.animation_type = os.getenv('ANIMATION_TYPE', 'eating')
+        self.prompt = os.getenv('PROMPT', 'adorable Shih Tzu dancing next to delicious trending food dish')
+        self.animation_type = os.getenv('ANIMATION_TYPE', 'dancing')
         self.runwayml_api_key = os.getenv('RUNWAYML_API_KEY')
         self.webhook_url = os.getenv('N8N_WEBHOOK')
         
-        # Enhanced Runway parameters from n8n
-        self.runway_motion_prompt = os.getenv('RUNWAY_MOTION_PROMPT', '')
+        # Enhanced Dancing parameters from n8n
+        self.dancing_motion_prompt = os.getenv('DANCING_MOTION_PROMPT', '')
         self.runway_negative_prompt = os.getenv('RUNWAY_NEGATIVE_PROMPT', '')
         
         # Camera and motion control
         self.camera_motion = int(os.getenv('CAMERA_MOTION', '0'))  # 0 = static camera
-        self.motion_strength = int(os.getenv('MOTION_STRENGTH', '3'))
-        self.motion_guidance = int(os.getenv('MOTION_GUIDANCE', '8'))
+        self.motion_strength = int(os.getenv('MOTION_STRENGTH', '4'))
+        self.motion_guidance = int(os.getenv('MOTION_GUIDANCE', '9'))
         self.motion_seed = os.getenv('MOTION_SEED', str(random.randint(1, 1000000)))
         self.upscale = os.getenv('UPSCALE', 'true').lower() == 'true'
         
         # Generation parameters
-        self.duration = int(os.getenv('DURATION', '6'))
+        self.duration = int(os.getenv('DURATION', '5'))
         self.fps = int(os.getenv('FPS', '24'))
         self.resolution = os.getenv('RESOLUTION', '1280x768')
         self.model = os.getenv('MODEL', 'gen3a_turbo')
         
-        # Motion brush parameters for jack-in-the-box effect
+        # Motion brush parameters for dancing effect
         self.subject_area = os.getenv('SUBJECT_AREA', 'shih_tzu_character')
-        self.motion_type = os.getenv('MOTION_TYPE', 'pop_up_emergence')
-        self.motion_direction = os.getenv('MOTION_DIRECTION', 'upward_from_center')
+        self.motion_type = os.getenv('MOTION_TYPE', 'dancing_movement')
+        self.motion_direction = os.getenv('MOTION_DIRECTION', 'bouncing_rhythmic')
         self.motion_intensity = os.getenv('MOTION_INTENSITY', 'medium_bouncy')
-        self.static_areas = os.getenv('STATIC_AREAS', 'background_dish_edges')
+        self.static_areas = os.getenv('STATIC_AREAS', 'background_plate_edges')
         
         logger.info(f"🎯 Camera Motion: {self.camera_motion} (0=static)")
-        logger.info(f"🎬 Motion Prompt: {self.runway_motion_prompt[:100]}...")
+        logger.info(f"🎬 Motion Prompt: {self.dancing_motion_prompt[:100]}...")
         logger.info(f"🚫 Negative Prompt: {self.runway_negative_prompt}")
         
     def create_enhanced_prompt(self):
         """Create detailed prompts using simplified, high-quality approach"""
         
         # Use the enhanced prompt from n8n if available
-        if self.runway_motion_prompt:
-            logger.info("✅ Using enhanced motion prompt from n8n")
-            return self.runway_motion_prompt
+        if self.dancing_motion_prompt:
+            logger.info("✅ Using enhanced dancing motion prompt from n8n")
+            return self.dancing_motion_prompt
         
-        # SIMPLIFIED prompts that actually work - focus on ONE action
+        # SIMPLIFIED prompts that actually work - focus on dancing action
         simple_realistic_prompts = {
-            'emergence': [
-                "Adorable Shih Tzu naturally eating delicious trending food from elegant white ceramic plate, realistic chewing motions, natural head movements while eating, food getting on whiskers, photorealistic quality, static camera",
+            'dancing': [
+                "Adorable Shih Tzu doing cute dance moves next to elegantly plated trending food on white ceramic plate, realistic bouncing movements, head bobbing to rhythm, tail wagging, joyful expressions, photorealistic quality, static camera",
                 
-                "Tiny fluffy Shih Tzu enjoying gourmet meal from fancy plate, authentic eating behavior, realistic pet movements, natural lighting, static camera position",
+                "Tiny fluffy Shih Tzu dancing on hind legs next to fancy plated gourmet food, natural rhythmic movements, authentic pet behavior, realistic dancing motions, natural lighting, static camera position",
                 
-                "Cute Shih Tzu messily eating from beautifully plated food, natural dog eating habits, realistic chewing, food on face, photorealistic"
+                "Cute Shih Tzu playfully bouncing and dancing around beautifully plated food, natural dog dancing behavior, realistic movements, happy expressions, photorealistic"
             ],
             
             'eating': [
@@ -83,20 +83,20 @@ class RunwayMLVideoBot:
                 "Tiny Shih Tzu messily eating from fancy white ceramic plate, authentic dog eating behavior, realistic movements, food getting everywhere"
             ],
             
-            'dancing': [
-                "Playful Shih Tzu naturally moving around elegant food plate, realistic pet behavior, bouncy movements, authentic dog mannerisms, static camera, photorealistic",
+            'emergence': [
+                "Adorable Shih Tzu naturally approaching delicious trending food from elegant white ceramic plate, realistic curiosity movements, natural head movements, photorealistic quality, static camera",
                 
-                "Adorable Shih Tzu excitedly approaching gourmet food, natural pet excitement, realistic tail wagging, authentic dog behavior",
+                "Tiny fluffy Shih Tzu discovering gourmet meal on fancy plate, authentic pet excitement, realistic tail wagging, natural lighting, static camera position",
                 
-                "Cute Shih Tzu playfully interacting with beautifully plated food, natural dog curiosity, realistic movements, photorealistic quality"
+                "Cute Shih Tzu excitedly approaching beautifully plated food, natural dog curiosity, realistic movements, photorealistic quality"
             ]
         }
         
         # Select appropriate prompt
-        selected_prompts = simple_realistic_prompts.get(self.animation_type, simple_realistic_prompts['eating'])
+        selected_prompts = simple_realistic_prompts.get(self.animation_type, simple_realistic_prompts['dancing'])
         enhanced_prompt = random.choice(selected_prompts)
         
-        logger.info("✅ Using simplified high-quality prompt")
+        logger.info("✅ Using simplified high-quality dancing prompt")
         return enhanced_prompt
     
     def generate_runwayml_video(self):
@@ -176,7 +176,7 @@ class RunwayMLVideoBot:
                 logger.info(f"🚫 Using negative prompt: {self.runway_negative_prompt}")
             
             logger.info("🚀 Sending enhanced request to RunwayML Gen-3a...")
-            logger.info(f"📊 Payload summary: camera_motion=static, duration={self.duration}s, seed={self.motion_seed}")
+            logger.info(f"📊 Payload summary: camera_motion=static, duration=5s, seed={self.motion_seed}")
             
             # Generate video using enhanced RunwayML API
             response = requests.post(
@@ -231,7 +231,7 @@ class RunwayMLVideoBot:
             # Simplified payload for better results
             simple_payload = {
                 "promptImage": data_uri,
-                "promptText": "Cute Shih Tzu dog naturally eating, realistic movement, static camera",
+                "promptText": "Cute Shih Tzu dog dancing naturally, realistic movement, static camera",
                 "model": "gen3a_turbo",
                 "aspectRatio": "16:9",
                 "duration": 5,  # 5 seconds - valid duration
@@ -346,7 +346,7 @@ class RunwayMLVideoBot:
             with open("final_animation.mp4", 'wb') as f:
                 f.write(video_data)
             
-            logger.info("🎬 ENHANCED AI VIDEO GENERATED WITH CAMERA CONTROL!")
+            logger.info("🎬 ENHANCED AI DANCING VIDEO GENERATED WITH CAMERA CONTROL!")
             logger.info("📱 Ready for social media upload!")
             
             return True
@@ -356,7 +356,7 @@ class RunwayMLVideoBot:
             return False
     
     def generate_dalle_base_image(self, enhanced_prompt):
-        """Generate base image using DALL-E with IMPROVED setup for animation"""
+        """Generate base image using DALL-E with IMPROVED setup for dancing animation"""
         try:
             openai_api_key = os.getenv('OPENAI_API_KEY')
             if not openai_api_key:
@@ -368,9 +368,11 @@ class RunwayMLVideoBot:
                 "Content-Type": "application/json"
             }
             
-            # IMPROVED base image prompt - dog already in eating position
-            if 'emergence' in self.animation_type or 'eating' in self.animation_type:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position. Professional food photography lighting, photorealistic quality, shallow depth of field. The dog appears ready to eat, positioned naturally near the fancy plated food."
+            # IMPROVED base image prompt - dog ready to dance
+            if 'dancing' in self.animation_type:
+                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes standing next to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog appears energetic and ready to dance, positioned naturally beside the fancy plated food. Professional food photography lighting, photorealistic quality, shallow depth of field. The scene captures the moment before the dog starts dancing."
+            elif 'eating' in self.animation_type:
+                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position. Professional food photography lighting, photorealistic quality, shallow depth of field."
             else:
                 dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, natural lighting, photorealistic quality, high detail."
             
@@ -383,7 +385,7 @@ class RunwayMLVideoBot:
                 "style": "vivid"
             }
             
-            logger.info("🎨 Generating enhanced base image with fancy plate...")
+            logger.info("🎨 Generating enhanced base image for dancing...")
             logger.info(f"🖼️ DALL-E prompt: {dalle_prompt[:100]}...")
             
             response = requests.post(
@@ -428,12 +430,12 @@ class RunwayMLVideoBot:
             logger.info(f"🎭 Animation type: {self.animation_type}")
             logger.info(f"📝 Base prompt: {self.prompt}")
             logger.info(f"🎯 Camera control: STATIC (motion={self.camera_motion})")
-            logger.info(f"🍽️ Concept: Fancy plate with trending food + jack-in-the-box effect")
+            logger.info(f"🕺 Concept: Adorable Shih Tzu dancing next to fancy plated food")
             
             success = self.generate_runwayml_video()
             
             if success:
-                logger.info("✅ ENHANCED AI VIDEO GENERATION ACCOMPLISHED!")
+                logger.info("✅ ENHANCED AI DANCING VIDEO GENERATION ACCOMPLISHED!")
                 logger.info("🎯 Camera stayed static, dog remained centered!")
                 return True
             else:
@@ -447,8 +449,8 @@ class RunwayMLVideoBot:
 def main():
     """Main entry point for enhanced RunwayML video bot"""
     logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION BOT")
-    logger.info("🚀 Creating REAL animated Shih Tzu videos with camera control")
-    logger.info("🍽️ Featuring fancy plates and jack-in-the-box effects")
+    logger.info("🚀 Creating REAL animated Shih Tzu dancing videos with camera control")
+    logger.info("🕺 Featuring adorable dance moves next to fancy plated food")
     
     if os.getenv('GITHUB_ACTIONS'):
         logger.info("☁️ Operating in GitHub Actions environment")
@@ -458,10 +460,10 @@ def main():
     success = video_bot.run_generation_mission()
     
     if success:
-        logger.info("✅ ENHANCED AI VIDEO MISSION ACCOMPLISHED!")
+        logger.info("✅ ENHANCED AI DANCING VIDEO MISSION ACCOMPLISHED!")
         sys.exit(0)
     else:
-        logger.error("❌ ENHANCED AI VIDEO MISSION FAILED!")
+        logger.error("❌ ENHANCED AI DANCING VIDEO MISSION FAILED!")
         sys.exit(1)
 
 if __name__ == "__main__":

@@ -152,7 +152,7 @@ class RunwayMLVideoBot:
                 "promptText": enhanced_prompt,
                 "model": self.model,
                 "aspectRatio": "16:9",  # Better for runway, crop to vertical later
-                "duration": 4,  # SHORTER = HIGHER QUALITY
+                "duration": 5,  # 5 seconds - valid Runway duration
                 "seed": int(self.motion_seed)
             }
             
@@ -234,7 +234,7 @@ class RunwayMLVideoBot:
                 "promptText": "Cute Shih Tzu dog naturally eating, realistic movement, static camera",
                 "model": "gen3a_turbo",
                 "aspectRatio": "16:9",
-                "duration": 4,  # Shorter for better quality
+                "duration": 5,  # 5 seconds - valid duration
                 "motionBrush": {
                     "strength": 4,
                     "guidance": 9

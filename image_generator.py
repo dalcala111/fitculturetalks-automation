@@ -58,45 +58,45 @@ class RunwayMLVideoBot:
         logger.info(f"🚫 Negative Prompt: {self.runway_negative_prompt}")
         
     def create_enhanced_prompt(self):
-        """Create detailed prompts using n8n enhanced parameters"""
+        """Create detailed prompts using simplified, high-quality approach"""
         
         # Use the enhanced prompt from n8n if available
         if self.runway_motion_prompt:
             logger.info("✅ Using enhanced motion prompt from n8n")
             return self.runway_motion_prompt
         
-        # Fallback prompts with fancy plate concept
-        fancy_plate_prompts = {
+        # SIMPLIFIED prompts that actually work - focus on ONE action
+        simple_realistic_prompts = {
             'emergence': [
-                "Tiny fluffy Shih Tzu is sitting INSIDE trendy food on elegant white ceramic plate like sitting in a food bath, with head and paws emerging upward from within the food itself. Dog is submerged in the food and pops head up from within, camera completely static, no movement. Dog emerges from within the food like coming up from a food bath, not standing behind it. Magical sparkles, 3D Pixar animation.",
+                "Adorable Shih Tzu naturally eating delicious trending food from elegant white ceramic plate, realistic chewing motions, natural head movements while eating, food getting on whiskers, photorealistic quality, static camera",
                 
-                "Adorable Shih Tzu literally sitting inside trendy food on fancy white plate like in a food bath, head emerging from within the food itself, static camera position, dog is submerged/buried in food. Eye-level frontal view showcasing expressive face. Elegant plating, dog is IN the food not behind it.",
+                "Tiny fluffy Shih Tzu enjoying gourmet meal from fancy plate, authentic eating behavior, realistic pet movements, natural lighting, static camera position",
                 
-                "Cute Shih Tzu sitting inside beautifully plated viral food like in a bath, head and paws visible above food surface, camera never moves, dog is literally inside the food dish. Magical emergence with sparkles, dog is submerged in food."
+                "Cute Shih Tzu messily eating from beautifully plated food, natural dog eating habits, realistic chewing, food on face, photorealistic"
             ],
             
             'eating': [
-                "Adorable Shih Tzu eating trending food from elegant white ceramic plate, static camera, dog stays perfectly centered, food falling off plate as dog eats messily but cutely. No camera movement, eye-level frontal view, realistic food physics with pieces scattering. 3D Pixar animation style.",
+                "Shih Tzu puppy naturally eating trending food from elegant plate, realistic chewing motions, authentic pet behavior, food on whiskers and face, static camera, photorealistic quality",
                 
-                "Tiny fluffy Shih Tzu adorably devouring viral food from fancy plate, camera completely static, dog remains in center frame, food gets on face and falls off plate. Messy but cute eating, no dog bowl, elegant food presentation.",
+                "Adorable Shih Tzu enjoying delicious meal, natural eating movements, realistic head positioning while eating, elegant food presentation, natural lighting",
                 
-                "Cute Shih Tzu making adorable mess eating from beautifully plated trending food, static camera position, centered composition, realistic food physics with crumbs and pieces falling off fancy white plate."
+                "Tiny Shih Tzu messily eating from fancy white ceramic plate, authentic dog eating behavior, realistic movements, food getting everywhere"
             ],
             
             'dancing': [
-                "Playful Shih Tzu dancing around elegantly plated trending food on fancy white ceramic plate, camera completely static, dog stays centered, bouncy movements, no camera motion. 3D Pixar style animation with realistic food presentation.",
+                "Playful Shih Tzu naturally moving around elegant food plate, realistic pet behavior, bouncy movements, authentic dog mannerisms, static camera, photorealistic",
                 
-                "Adorable Shih Tzu doing cute dance moves around viral food on elegant plate, static camera, centered framing, bouncy animation, no dog bowl, fancy food plating.",
+                "Adorable Shih Tzu excitedly approaching gourmet food, natural pet excitement, realistic tail wagging, authentic dog behavior",
                 
-                "Tiny fluffy Shih Tzu celebrating around beautifully presented trending food, camera never moves, dog remains center frame, playful dance motions, elegant plate presentation."
+                "Cute Shih Tzu playfully interacting with beautifully plated food, natural dog curiosity, realistic movements, photorealistic quality"
             ]
         }
         
         # Select appropriate prompt
-        selected_prompts = fancy_plate_prompts.get(self.animation_type, fancy_plate_prompts['emergence'])
+        selected_prompts = simple_realistic_prompts.get(self.animation_type, simple_realistic_prompts['eating'])
         enhanced_prompt = random.choice(selected_prompts)
         
-        logger.info("✅ Using fallback enhanced prompt with fancy plate concept")
+        logger.info("✅ Using simplified high-quality prompt")
         return enhanced_prompt
     
     def generate_runwayml_video(self):
@@ -146,17 +146,17 @@ class RunwayMLVideoBot:
                 "X-Runway-Version": "2024-11-06"
             }
             
-            # Build enhanced payload with all our parameters
+            # Build enhanced payload with IMPROVED SETTINGS for better quality
             payload = {
                 "promptImage": data_uri,
                 "promptText": enhanced_prompt,
                 "model": self.model,
-                "aspectRatio": "16:9",  # Will crop to vertical later
-                "duration": self.duration,
+                "aspectRatio": "16:9",  # Better for runway, crop to vertical later
+                "duration": 4,  # SHORTER = HIGHER QUALITY
                 "seed": int(self.motion_seed)
             }
             
-            # Add camera control - this is crucial!
+            # IMPROVED camera control for better results
             if self.camera_motion == 0:
                 payload["cameraMotion"] = {
                     "type": "static",
@@ -164,10 +164,10 @@ class RunwayMLVideoBot:
                 }
                 logger.info("🎯 CAMERA SET TO STATIC - NO MOVEMENT")
             
-            # Add motion control parameters
+            # UPGRADED motion control for more natural movement
             payload["motionBrush"] = {
-                "strength": self.motion_strength,
-                "guidance": self.motion_guidance
+                "strength": 4,  # INCREASED from 3 to 4 for more visible action
+                "guidance": 9   # INCREASED from 8 to 9 for better quality
             }
             
             # Add negative prompt if provided
@@ -228,13 +228,17 @@ class RunwayMLVideoBot:
         try:
             logger.info("🔄 Attempting simpler RunwayML request...")
             
-            # Simplified payload
+            # Simplified payload for better results
             simple_payload = {
                 "promptImage": data_uri,
-                "promptText": "Cute Shih Tzu dog with slight movement, static camera, no camera movement",
+                "promptText": "Cute Shih Tzu dog naturally eating, realistic movement, static camera",
                 "model": "gen3a_turbo",
                 "aspectRatio": "16:9",
-                "duration": 5
+                "duration": 4,  # Shorter for better quality
+                "motionBrush": {
+                    "strength": 4,
+                    "guidance": 9
+                }
             }
             
             response = requests.post(
@@ -352,7 +356,7 @@ class RunwayMLVideoBot:
             return False
     
     def generate_dalle_base_image(self, enhanced_prompt):
-        """Generate base image using DALL-E with enhanced fancy plate prompt"""
+        """Generate base image using DALL-E with IMPROVED setup for animation"""
         try:
             openai_api_key = os.getenv('OPENAI_API_KEY')
             if not openai_api_key:
@@ -364,11 +368,11 @@ class RunwayMLVideoBot:
                 "Content-Type": "application/json"
             }
             
-            # Create enhanced base image prompt focusing on dog INSIDE food
-            if 'emergence' in self.animation_type:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes sitting INSIDE a large bowl of beautifully presented viral trending food on an elegant white ceramic plate. The dog is submerged/buried in the food like sitting in a food bath, with only head and front paws visible above the food surface. The food appears deep and voluminous enough for a small dog to sit in. Clean modern kitchen background, professional food photography lighting, high quality, detailed. The scene shows the dog literally inside the food, not behind or next to it."
+            # IMPROVED base image prompt - dog already in eating position
+            if 'emergence' in self.animation_type or 'eating' in self.animation_type:
+                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. The dog's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position. Professional food photography lighting, photorealistic quality, shallow depth of field. The dog appears ready to eat, positioned naturally near the fancy plated food."
             else:
-                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes and soft cream/brown fur next to an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, no dog bowl, high quality, detailed."
+                dalle_prompt = "A tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. Professional food photography, clean background, fancy plating, natural lighting, photorealistic quality, high detail."
             
             payload = {
                 "model": "dall-e-3",

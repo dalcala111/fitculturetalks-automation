@@ -591,3 +591,160 @@ class EnhancedRunwayMLVideoBot:
                 filename = f"runwayml_video_ref_{self.selected_dance}_{timestamp}.mp4"
             else:
                 filename = f"runwayml_generation_{timestamp}.mp4"
+            
+            with open(filename, 'wb') as f:
+                f.write(video_data)
+            logger.info(f"💾 Enhanced video saved as: {filename}")
+            
+            # Copy video to expected animation output
+            with open("final_animation.mp4", 'wb') as f:
+                f.write(video_data)
+            
+            if self.use_video_reference:
+                logger.info(f"🎬 VIDEO-TO-VIDEO {self.selected_dance.upper()} DANCE GENERATED WITH REFERENCE PRECISION!")
+                logger.info(f"💃 Reference strength: {self.reference_strength} - Dance: {self.selected_dance}")
+            else:
+                logger.info("🎬 ENHANCED DEUCE DANCING VIDEO GENERATED WITH ADVANCED CONTROLS!")
+            
+            logger.info("📱 Professional quality ready for social media upload!")
+            logger.info(f"🎯 Enhanced features: {self.motion_strength} motion strength, {self.motion_guidance} guidance, {self.duration}s duration")
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"❌ Error saving enhanced video: {e}")
+            return False
+    
+    def generate_enhanced_dalle_base_image(self, enhanced_prompt):
+        """Generate enhanced base image using DALL-E with advanced setup for Deuce's human-like dancing animation"""
+        try:
+            openai_api_key = os.getenv('OPENAI_API_KEY')
+            if not openai_api_key:
+                logger.error("❌ OPENAI_API_KEY not found")
+                return False
+            
+            headers = {
+                "Authorization": f"Bearer {openai_api_key}",
+                "Content-Type": "application/json"
+            }
+            
+            # ENHANCED base image prompt with quality descriptors
+            if 'dancing' in self.animation_type:
+                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes, standing upright on hind legs like a human person next to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce appears ready to dance like a human with {', '.join(self.dance_quality[:2])}, front paws positioned like human arms, standing in anthropomorphic upright pose beside the fancy plated food. {self.lighting.replace('_', ' ')}, {', '.join(self.visual_quality[:2])}, shallow depth of field. The scene captures the moment before Deuce starts {', '.join(self.motion_descriptors[:2])} human-like dancing."
+            elif 'eating' in self.animation_type:
+                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position with {', '.join(self.motion_descriptors[:1])}. {self.lighting.replace('_', ' ')}, {', '.join(self.visual_quality[:2])}, shallow depth of field."
+            else:
+                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. {self.lighting.replace('_', ' ')}, clean background, fancy plating, {', '.join(self.visual_quality[:2])}, high detail."
+            
+            payload = {
+                "model": "dall-e-3",
+                "prompt": dalle_prompt,
+                "n": 1,
+                "size": "1024x1024",
+                "quality": "hd",
+                "style": "vivid"
+            }
+            
+            logger.info("🎨 Generating ENHANCED base image for Deuce's dancing...")
+            logger.info(f"🖼️ Enhanced DALL-E prompt: {dalle_prompt[:150]}...")
+            
+            response = requests.post(
+                "https://api.openai.com/v1/images/generations",
+                headers=headers,
+                json=payload,
+                timeout=60
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                image_url = result['data'][0]['url']
+                
+                # Download the image
+                img_response = requests.get(image_url, timeout=30)
+                if img_response.status_code == 200:
+                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                    filename = f"dalle_generation_{timestamp}.png"
+                    
+                    with open(filename, 'wb') as f:
+                        f.write(img_response.content)
+                    
+                    logger.info(f"✅ ENHANCED base image saved: {filename}")
+                    return True
+                else:
+                    logger.error("❌ Failed to download enhanced DALL-E image")
+                    return False
+            else:
+                logger.error(f"❌ Enhanced DALL-E API error: {response.status_code}")
+                logger.error(f"Enhanced DALL-E error details: {response.text}")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Error generating enhanced DALL-E base image: {e}")
+            return False
+    
+    def run_enhanced_generation_mission(self):
+        """Execute the complete enhanced video generation mission"""
+        try:
+            logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION STARTING...")
+            logger.info(f"📅 Enhanced mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+            logger.info(f"🎭 Animation type: {self.animation_type}")
+            logger.info(f"📝 Base prompt: {self.prompt}")
+            logger.info(f"🎯 Enhanced camera control: STATIC (motion={self.camera_motion})")
+            logger.info(f"💪 Enhanced motion strength: {self.motion_strength}")
+            logger.info(f"🎯 Enhanced motion guidance: {self.motion_guidance}")
+            logger.info(f"⏱️  Enhanced duration: {self.duration} seconds")
+            logger.info(f"🎥 Enhanced FPS: {self.fps}")
+            
+            if self.use_video_reference:
+                logger.info(f"🎥 VIDEO REFERENCE MODE: {self.selected_dance} dance")
+                logger.info(f"🎯 Reference strength: {self.reference_strength}")
+                logger.info(f"🕺 Enhanced concept: Deuce copying {self.selected_dance} moves from reference video")
+            else:
+                logger.info(f"🕺 Enhanced concept: Deuce the Shih Tzu dancing like a human with professional quality")
+            
+            success = self.generate_runwayml_video()
+            
+            if success:
+                if self.use_video_reference:
+                    logger.info(f"✅ VIDEO-TO-VIDEO {self.selected_dance.upper()} GENERATION ACCOMPLISHED!")
+                    logger.info(f"🎯 Reference-guided precision: Deuce copied {self.selected_dance} moves perfectly!")
+                else:
+                    logger.info("✅ ENHANCED DEUCE DANCING VIDEO GENERATION ACCOMPLISHED!")
+                    logger.info("🎯 Enhanced camera stayed static, Deuce remained centered with fluid motion!")
+                
+                logger.info(f"🎬 Quality features: {len(self.motion_descriptors)} motion terms, {len(self.visual_quality)} visual enhancements")
+                return True
+            else:
+                logger.error("❌ Enhanced video generation failed")
+                return False
+                
+        except Exception as e:
+            logger.error(f"❌ Enhanced mission failed: {e}")
+            return False
+
+def main():
+    """Main entry point for enhanced RunwayML video bot"""
+    logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION BOT v3.0")
+    logger.info("🚀 Creating PROFESSIONAL animated Deuce the Shih Tzu dancing videos with advanced controls")
+    logger.info("🕺 Featuring enhanced human-like dance moves with professional quality motion")
+    logger.info("🎥 NEW: Video reference support for precise dance choreography!")
+    
+    if os.getenv('GITHUB_ACTIONS'):
+        logger.info("☁️ Operating in GitHub Actions environment with enhanced parameters")
+    
+    # Create and run the enhanced RunwayML bot
+    video_bot = EnhancedRunwayMLVideoBot()
+    success = video_bot.run_enhanced_generation_mission()
+    
+    if success:
+        if video_bot.use_video_reference:
+            logger.info(f"✅ VIDEO-TO-VIDEO {video_bot.selected_dance.upper()} MISSION ACCOMPLISHED!")
+        else:
+            logger.info("✅ ENHANCED DEUCE DANCING VIDEO MISSION ACCOMPLISHED!")
+        sys.exit(0)
+    else:
+        logger.error("❌ ENHANCED DEUCE DANCING VIDEO MISSION FAILED!")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()

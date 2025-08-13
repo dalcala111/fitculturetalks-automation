@@ -343,225 +343,270 @@ jobs:
 
     - name: Create Advanced RunwayML Deuce Video Editor Script
       run: |
-        cat > advanced_video_editor.py << 'EOF'
-        import subprocess
-        import os
-        import json
-        import sys
-        from pathlib import Path
+       cat > advanced_video_editor.py << 'EOF'
+import subprocess
+import os
+import json
+import sys
+import re
+from pathlib import Path
 
-        class RunwayMLVideoProcessor:
-            def __init__(self):
-                self.video_file = "final_animation.mp4"
-                self.audio_file = None
-                self.recipe_text = ""
-                self.output_file = "tiktok_masterpiece.mp4"
+class RunwayMLVideoProcessor:
+    def __init__(self):
+        self.video_file = "final_animation.mp4"
+        self.audio_file = None
+        self.recipe_text = ""
+        self.output_file = "tiktok_masterpiece.mp4"
+        
+    def find_files(self):
+        """Find all necessary files for video processing"""
+        print("🔍 Searching for RunwayML Deuce video and audio files...")
+        
+        # Find animated video
+        if not os.path.exists(self.video_file):
+            print("❌ Video not found!")
+            return False
+            
+        # Check for voice audio (will be uploaded by n8n)
+        audio_files = [f for f in os.listdir(".") if f.endswith(('.mp3', '.wav', '.m4a'))]
+        if audio_files:
+            self.audio_file = audio_files[0]
+            print(f"🎤 Found audio: {self.audio_file}")
+        else:
+            print("⚠️ No audio file found, creating video without voice-over")
+        
+        print(f"📹 Video: {self.video_file}")
+        return True
+        
+    def get_recipe_text(self):
+        """Extract recipe text for overlay"""
+        # Get recipe text from GitHub Actions environment
+        recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
+        animation_type = os.environ.get('ANIMATION_TYPE', 'dancing')
+        selected_dance = os.environ.get('SELECTED_DANCE', 'macarena')
+        
+        if recipe_from_payload:
+            self.recipe_text = recipe_from_payload
+        else:
+            # Generate cute Deuce text based on animation type and dance (NO EMOJIS)
+            deuce_texts = {
+                'emergence': "Deuce discovers amazing food! So precious!",
+                'eating': "Watch Deuce enjoy delicious food! So adorable!",
+                'dancing': f"Deuce does the {selected_dance.title()}! This little angel has the smoothest moves!"
+            }
+            self.recipe_text = deuce_texts.get(animation_type, f"Deuce's most adorable {selected_dance} dancing adventure!")
+            
+        print(f"📝 Video text: {self.recipe_text[:50]}...")
+        
+    def sanitize_text_for_ffmpeg(self, text):
+        """Sanitize text for FFmpeg to avoid special character issues"""
+        # Remove emojis and special characters that cause FFmpeg issues
+        sanitized = re.sub(r'[^\w\s\-\!\?\.\,\']', '', text)
+        # Replace single quotes with escaped quotes
+        sanitized = sanitized.replace("'", "\\'")
+        # Limit length
+        if len(sanitized) > 100:
+            sanitized = sanitized[:97] + "..."
+        return sanitized
+        
+    def create_text_overlay(self):
+        """Create stylized text overlay for TikTok"""
+        # Sanitize the text first
+        clean_text = self.sanitize_text_for_ffmpeg(self.recipe_text)
+        
+        # Split text into multiple lines for better readability
+        words = clean_text.split()
+        lines = []
+        current_line = ""
+        
+        for word in words:
+            if len(current_line + " " + word) <= 25:  # Shorter lines for mobile
+                current_line += " " + word if current_line else word
+            else:
+                lines.append(current_line)
+                current_line = word
                 
-            def find_files(self):
-                """Find all necessary files for video processing"""
-                print("🔍 Searching for RunwayML Deuce video and audio files...")
-                
-                # Find animated video
-                if not os.path.exists(self.video_file):
-                    print("❌ Video not found!")
-                    return False
-                    
-                # Check for voice audio (will be uploaded by n8n)
-                audio_files = [f for f in os.listdir(".") if f.endswith(('.mp3', '.wav', '.m4a'))]
-                if audio_files:
-                    self.audio_file = audio_files[0]
-                    print(f"🎤 Found audio: {self.audio_file}")
-                else:
-                    print("⚠️ No audio file found, creating video without voice-over")
-                
-                print(f"📹 Video: {self.video_file}")
+        if current_line:
+            lines.append(current_line)
+        
+        # Limit to 3 lines for mobile viewing
+        formatted_text = "\\n".join(lines[:3])
+        
+        return formatted_text
+        
+    def create_professional_video(self):
+        """Create professional-quality RunwayML enhanced video with simplified overlay"""
+        print("🎬 Creating professional RunwayML Deuce dancing video...")
+        
+        formatted_text = self.create_text_overlay()
+        
+        # Advanced FFmpeg command optimized for RunwayML content
+        base_cmd = [
+            'ffmpeg', '-y',
+            '-i', self.video_file
+        ]
+        
+        # Add audio if available
+        if self.audio_file:
+            base_cmd.extend(['-i', self.audio_file])
+        
+        # SIMPLIFIED filter complex to avoid text parsing issues
+        filter_parts = []
+        
+        # Video scaling and enhancement for RunwayML content
+        filter_parts.append(
+            "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,"
+            "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=#FFF0F5@1.0,"
+            "eq=brightness=0.05:contrast=1.1:saturation=1.15[scaled]"
+        )
+        
+        # SIMPLIFIED text overlay without complex styling
+        text_filter = (
+            f"[scaled]drawtext="
+            f"text='{formatted_text}':"
+            f"fontsize=36:"
+            f"fontcolor=white:"
+            f"x=(w-text_w)/2:"
+            f"y=h-180:"
+            f"box=1:"
+            f"boxcolor=black@0.8:"
+            f"boxborderw=6[texted]"
+        )
+        filter_parts.append(text_filter)
+        
+        # Combine filters
+        filter_complex = ";".join(filter_parts)
+        
+        base_cmd.extend([
+            '-filter_complex', filter_complex,
+            '-map', '[texted]'
+        ])
+        
+        # Audio mapping
+        if self.audio_file:
+            base_cmd.extend(['-map', '1:a'])
+            
+        # Professional encoding settings optimized for social media
+        base_cmd.extend([
+            '-c:v', 'libx264',
+            '-preset', 'medium',
+            '-crf', '18',  # Higher quality for RunwayML content
+            '-c:a', 'aac',
+            '-b:a', '128k',
+            '-r', '30',
+            '-shortest' if self.audio_file else '-t', '10',
+            '-movflags', '+faststart',  # Optimize for web playback
+            self.output_file
+        ])
+        
+        try:
+            print("🚀 Executing enhanced RunwayML video processing...")
+            print(f"🎬 Using text overlay: {formatted_text}")
+            
+            result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                print("✅ Professional RunwayML Deuce dancing video created successfully!")
+                self.analyze_output()
                 return True
+            else:
+                print(f"❌ FFmpeg error: {result.stderr}")
+                # Try creating video without text overlay as fallback
+                return self.create_simple_video()
                 
-            def get_recipe_text(self):
-                """Extract recipe text for overlay"""
-                # Get recipe text from GitHub Actions environment
-                recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
-                animation_type = os.environ.get('ANIMATION_TYPE', 'dancing')
-                selected_dance = os.environ.get('SELECTED_DANCE', 'macarena')
+        except subprocess.TimeoutExpired:
+            print("❌ Video processing timed out")
+            return False
+        except Exception as e:
+            print(f"❌ Unexpected error: {e}")
+            return False
+    
+    def create_simple_video(self):
+        """Fallback: Create video without text overlay"""
+        print("🔄 Creating simplified video without text overlay...")
+        
+        base_cmd = [
+            'ffmpeg', '-y',
+            '-i', self.video_file,
+            '-vf', 'scale=1080:1920:force_original_aspect_ratio=decrease,pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=#FFF0F5@1.0',
+            '-c:v', 'libx264',
+            '-preset', 'medium',
+            '-crf', '18',
+            '-r', '30',
+            '-t', '10',
+            '-movflags', '+faststart',
+            self.output_file
+        ]
+        
+        try:
+            result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
+            
+            if result.returncode == 0:
+                print("✅ Simplified RunwayML Deuce dancing video created successfully!")
+                self.analyze_output()
+                return True
+            else:
+                print(f"❌ Simplified video creation also failed: {result.stderr}")
+                return False
                 
-                if recipe_from_payload:
-                    self.recipe_text = recipe_from_payload
-                else:
-                    # Generate cute Deuce text based on animation type and dance
-                    deuce_texts = {
-                        'emergence': "✨ Deuce discovers amazing food! So precious! 🐕💫",
-                        'eating': "😋 Watch Deuce enjoy delicious food! So adorable! 🍽️❤️",
-                        'dancing': f"🎵 Deuce does the {selected_dance.title()}! This little angel has the smoothest moves! 💃🐕✨"
-                    }
-                    self.recipe_text = deuce_texts.get(animation_type, f"🐕 Deuce's most adorable {selected_dance} dancing adventure! ✨")
-                    
-                print(f"📝 Video text: {self.recipe_text[:50]}...")
+        except Exception as e:
+            print(f"❌ Simplified video creation failed: {e}")
+            return False
+            
+    def analyze_output(self):
+        """Analyze the created video"""
+        if not os.path.exists(self.output_file):
+            return
+            
+        # Get video info
+        info_cmd = [
+            'ffprobe', '-v', 'quiet', '-print_format', 'json',
+            '-show_format', '-show_streams', self.output_file
+        ]
+        
+        try:
+            result = subprocess.run(info_cmd, capture_output=True, text=True)
+            if result.returncode == 0:
+                info = json.loads(result.stdout)
+                duration = float(info['format']['duration'])
+                size_mb = os.path.getsize(self.output_file) / (1024*1024)
                 
-            def create_text_overlay(self):
-                """Create stylized text overlay for TikTok"""
-                # Split text into multiple lines for better readability
-                words = self.recipe_text.split()
-                lines = []
-                current_line = ""
+                print(f"📊 Enhanced RunwayML Deuce Dancing Video Analysis:")
+                print(f"   Duration: {duration:.1f} seconds")
+                print(f"   File Size: {size_mb:.1f} MB")
+                print(f"   Format: MP4 (1080x1920)")
+                print(f"   Quality: Professional grade with enhanced motion")
+                print(f"   Status: Ready for viral success! 🎬✨")
                 
-                for word in words:
-                    if len(current_line + " " + word) <= 25:  # Shorter lines for mobile
-                        current_line += " " + word if current_line else word
-                    else:
-                        lines.append(current_line)
-                        current_line = word
-                        
-                if current_line:
-                    lines.append(current_line)
-                
-                # Limit to 3 lines for mobile viewing
-                formatted_text = "\\n".join(lines[:3])
-                
-                return formatted_text
-                
-            def create_professional_video(self):
-                """Create professional-quality RunwayML enhanced video"""
-                print("🎬 Creating professional RunwayML Deuce dancing video...")
-                
-                formatted_text = self.create_text_overlay()
-                
-                # Advanced FFmpeg command optimized for RunwayML content
-                base_cmd = [
-                    'ffmpeg', '-y',
-                    '-i', self.video_file
-                ]
-                
-                # Add audio if available
-                if self.audio_file:
-                    base_cmd.extend(['-i', self.audio_file])
-                
-                # Create sophisticated filter complex for RunwayML content
-                filter_parts = []
-                
-                # Video scaling and enhancement for RunwayML content
-                filter_parts.append(
-                    "[0:v]scale=1080:1920:force_original_aspect_ratio=decrease,"
-                    "pad=1080:1920:(ow-iw)/2:(oh-ih)/2:color=#FFF0F5@1.0,"  # Light pink background
-                    "eq=brightness=0.05:contrast=1.1:saturation=1.15[scaled]"  # Enhance RunwayML output
-                )
-                
-                # Subtle text overlay that doesn't interfere with RunwayML animation
-                text_filter = (
-                    f"[scaled]drawtext="
-                    f"text='{formatted_text}':"
-                    f"fontfile=/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf:"
-                    f"fontsize=38:"
-                    f"fontcolor=white:"
-                    f"x=(w-text_w)/2:"
-                    f"y=h-200:"
-                    f"box=1:"
-                    f"boxcolor=#FF69B4@0.7:"  # Semi-transparent pink box
-                    f"boxborderw=8:"
-                    f"shadowcolor=black@0.6:"
-                    f"shadowx=2:"
-                    f"shadowy=2[texted]"
-                )
-                filter_parts.append(text_filter)
-                
-                # Combine filters
-                filter_complex = ";".join(filter_parts)
-                
-                base_cmd.extend([
-                    '-filter_complex', filter_complex,
-                    '-map', '[texted]'
-                ])
-                
-                # Audio mapping
-                if self.audio_file:
-                    base_cmd.extend(['-map', '1:a'])
-                    
-                # Professional encoding settings optimized for social media
-                base_cmd.extend([
-                    '-c:v', 'libx264',
-                    '-preset', 'medium',
-                    '-crf', '18',  # Higher quality for RunwayML content
-                    '-c:a', 'aac',
-                    '-b:a', '128k',
-                    '-r', '30',
-                    '-shortest' if self.audio_file else '-t', '10',  # Updated to 10 seconds
-                    '-movflags', '+faststart',  # Optimize for web playback
-                    self.output_file
-                ])
-                
-                try:
-                    print("🚀 Executing enhanced RunwayML video processing...")
-                    result = subprocess.run(base_cmd, capture_output=True, text=True, timeout=300)
-                    
-                    if result.returncode == 0:
-                        print("✅ Professional RunwayML Deuce dancing video created successfully!")
-                        self.analyze_output()
-                        return True
-                    else:
-                        print(f"❌ FFmpeg error: {result.stderr}")
-                        return False
-                        
-                except subprocess.TimeoutExpired:
-                    print("❌ Video processing timed out")
-                    return False
-                except Exception as e:
-                    print(f"❌ Unexpected error: {e}")
-                    return False
-                    
-            def analyze_output(self):
-                """Analyze the created video"""
-                if not os.path.exists(self.output_file):
-                    return
-                    
-                # Get video info
-                info_cmd = [
-                    'ffprobe', '-v', 'quiet', '-print_format', 'json',
-                    '-show_format', '-show_streams', self.output_file
-                ]
-                
-                try:
-                    result = subprocess.run(info_cmd, capture_output=True, text=True)
-                    if result.returncode == 0:
-                        info = json.loads(result.stdout)
-                        duration = float(info['format']['duration'])
-                        size_mb = os.path.getsize(self.output_file) / (1024*1024)
-                        
-                        print(f"📊 Enhanced RunwayML Deuce Dancing Video Analysis:")
-                        print(f"   Duration: {duration:.1f} seconds")
-                        print(f"   File Size: {size_mb:.1f} MB")
-                        print(f"   Format: MP4 (1080x1920)")
-                        print(f"   Quality: Professional grade with enhanced motion")
-                        print(f"   Status: Ready for viral success! 🎬✨")
-                        
-                except Exception as e:
-                    print(f"⚠️ Could not analyze video: {e}")
-                    
-            def process_video(self):
-                """Main processing pipeline"""
-                print("🎬 STARTING ENHANCED RUNWAYML DEUCE DANCING VIDEO PROCESSING PIPELINE")
-                print("=" * 50)
-                
-                if not self.find_files():
-                    return False
-                    
-                self.get_recipe_text()
-                
-                success = self.create_professional_video()
-                
-                if success:
-                    print("🎉 ENHANCED RUNWAYML DEUCE DANCING MASTERPIECE CREATED!")
-                    print(f"📱 File: {self.output_file}")
-                    return True
-                else:
-                    print("❌ Video processing failed")
-                    return False
+        except Exception as e:
+            print(f"⚠️ Could not analyze video: {e}")
+            
+    def process_video(self):
+        """Main processing pipeline"""
+        print("🎬 STARTING ENHANCED RUNWAYML DEUCE DANCING VIDEO PROCESSING PIPELINE")
+        print("=" * 50)
+        
+        if not self.find_files():
+            return False
+            
+        self.get_recipe_text()
+        
+        success = self.create_professional_video()
+        
+        if success:
+            print("🎉 ENHANCED RUNWAYML DEUCE DANCING MASTERPIECE CREATED!")
+            print(f"📱 File: {self.output_file}")
+            return True
+        else:
+            print("❌ Video processing failed")
+            return False
 
-        # Execute the video processor
-        if __name__ == "__main__":
-            processor = RunwayMLVideoProcessor()
-            success = processor.process_video()
-            sys.exit(0 if success else 1)
-        EOF
-
+# Execute the video processor
+if __name__ == "__main__":
+    processor = RunwayMLVideoProcessor()
+    success = processor.process_video()
+    sys.exit(0 if success else 1)
+EOF
     - name: Execute Advanced RunwayML Video Processing
       env:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}

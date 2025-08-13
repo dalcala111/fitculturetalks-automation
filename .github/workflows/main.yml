@@ -40,7 +40,7 @@ jobs:
         echo "📁 Current directory after cleanup:"
         ls -la
 
-    # NEW: Download Reference Video Step
+    # UPDATED: Download Reference Video Step
     - name: Download Reference Video
       if: github.event.client_payload.use_video_reference == true
       env:
@@ -50,21 +50,18 @@ jobs:
         echo "🎥 Downloading reference video for $SELECTED_DANCE dance..."
         echo "📺 URL: $REFERENCE_VIDEO_URL"
         
-        # Install yt-dlp for YouTube video downloading
-        pip install yt-dlp
-        
-        # Download the reference video in appropriate quality
-        yt-dlp -f "best[height<=720]" -o "reference_video.%(ext)s" "$REFERENCE_VIDEO_URL"
+        # Download from your GitHub repository (no yt-dlp needed!)
+        curl -L -o "reference_video.mp4" "$REFERENCE_VIDEO_URL"
         
         # Verify download
-        if ls reference_video.* 1> /dev/null 2>&1; then
+        if [ -f "reference_video.mp4" ]; then
           echo "✅ Reference video downloaded successfully!"
-          ls -la reference_video.*
+          ls -la reference_video.mp4
           
           # Get video info
-          pip install ffmpeg-python
+          sudo apt-get update && sudo apt-get install -y ffmpeg
           echo "📊 Reference video info:"
-          ffprobe -v quiet -print_format json -show_format -show_streams reference_video.* | head -20
+          ffprobe -v quiet -print_format json -show_format -show_streams reference_video.mp4 | head -20
         else
           echo "❌ Failed to download reference video"
           exit 1
@@ -135,7 +132,7 @@ jobs:
         PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
         
-        # NEW: Video reference settings
+        # VIDEO REFERENCE SETTINGS
         USE_VIDEO_REFERENCE: ${{ github.event.client_payload.use_video_reference || 'false' }}
         REFERENCE_VIDEO_URL: ${{ github.event.client_payload.reference_video_url }}
         SELECTED_DANCE: ${{ github.event.client_payload.selected_dance || 'macarena' }}

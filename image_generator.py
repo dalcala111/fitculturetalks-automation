@@ -2,6 +2,7 @@
 """
 ENHANCED RUNWAYML AI VIDEO GENERATION BOT
 Creates REAL animated Deuce the Shih Tzu dancing videos with enhanced motion quality and camera control
+Now supports VIDEO REFERENCE for precise dance choreography!
 """
 
 import time
@@ -20,7 +21,7 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 logger = logging.getLogger(__name__)
 
 class EnhancedRunwayMLVideoBot:
-    """Enhanced bot that generates real animated videos via RunwayML Gen-3a with advanced controls"""
+    """Enhanced bot that generates real animated videos via RunwayML Gen-3a with advanced controls and video reference support"""
     
     def __init__(self):
         # Basic parameters
@@ -28,6 +29,13 @@ class EnhancedRunwayMLVideoBot:
         self.animation_type = os.getenv('ANIMATION_TYPE', 'dancing')
         self.runwayml_api_key = os.getenv('RUNWAYML_API_KEY')
         self.webhook_url = os.getenv('N8N_WEBHOOK')
+        
+        # NEW: Video reference parameters
+        self.use_video_reference = os.getenv('USE_VIDEO_REFERENCE', 'false').lower() == 'true'
+        self.reference_video_url = os.getenv('REFERENCE_VIDEO_URL', '')
+        self.selected_dance = os.getenv('SELECTED_DANCE', 'macarena')
+        self.reference_strength = float(os.getenv('REFERENCE_STRENGTH', '0.8'))
+        self.video_to_video = os.getenv('VIDEO_TO_VIDEO', 'false').lower() == 'true'
         
         # Enhanced Dancing parameters from n8n
         self.dancing_motion_prompt = os.getenv('DANCING_MOTION_PROMPT', '')
@@ -98,7 +106,56 @@ class EnhancedRunwayMLVideoBot:
         logger.info(f"📱 Enhanced Resolution: {self.resolution}")
         logger.info(f"🎬 Enhanced Motion Prompt: {self.dancing_motion_prompt[:100]}...")
         logger.info(f"🚫 Enhanced Negative Prompt: {self.runway_negative_prompt}")
+        logger.info(f"🎥 VIDEO REFERENCE MODE: {self.use_video_reference}")
+        if self.use_video_reference:
+            logger.info(f"💃 Selected Dance: {self.selected_dance}")
+            logger.info(f"🎯 Reference Strength: {self.reference_strength}")
+            logger.info(f"📺 Reference Video URL: {self.reference_video_url}")
         
+    def find_reference_video(self):
+        """Find the downloaded reference video file"""
+        try:
+            # Look for reference video files
+            reference_patterns = ["reference_video.*", "reference_video.mp4", "reference_video.webm", "reference_video.mov"]
+            
+            for pattern in reference_patterns:
+                found_files = glob.glob(pattern)
+                if found_files:
+                    reference_path = found_files[0]
+                    logger.info(f"✅ Found reference video: {reference_path}")
+                    return reference_path
+            
+            logger.error("❌ No reference video found")
+            return None
+            
+        except Exception as e:
+            logger.error(f"❌ Error finding reference video: {e}")
+            return None
+    
+    def convert_video_to_base64(self, video_path):
+        """Convert video file to base64 data URI for RunwayML"""
+        try:
+            with open(video_path, 'rb') as f:
+                video_data = f.read()
+                base64_video = base64.b64encode(video_data).decode('utf-8')
+                # Determine MIME type based on file extension
+                if video_path.lower().endswith('.mp4'):
+                    mime_type = "video/mp4"
+                elif video_path.lower().endswith('.webm'):
+                    mime_type = "video/webm"
+                elif video_path.lower().endswith('.mov'):
+                    mime_type = "video/quicktime"
+                else:
+                    mime_type = "video/mp4"  # Default
+                
+                data_uri = f"data:{mime_type};base64,{base64_video}"
+                logger.info(f"✅ Reference video converted to base64 ({len(base64_video)} chars)")
+                return data_uri
+                
+        except Exception as e:
+            logger.error(f"❌ Error converting reference video to base64: {e}")
+            return None
+    
     def create_enhanced_prompt(self):
         """Create enhanced prompts with quality descriptors"""
         
@@ -157,7 +214,7 @@ class EnhancedRunwayMLVideoBot:
         return enhanced_prompt
     
     def generate_runwayml_video(self):
-        """Generate real animated video using enhanced RunwayML Gen-3a with advanced controls"""
+        """Generate real animated video using enhanced RunwayML Gen-3a with advanced controls and video reference support"""
         try:
             logger.info("🎬 STARTING ENHANCED RUNWAYML AI VIDEO GENERATION...")
             
@@ -167,6 +224,132 @@ class EnhancedRunwayMLVideoBot:
             
             enhanced_prompt = self.create_enhanced_prompt()
             logger.info(f"📝 Final Enhanced Prompt: {enhanced_prompt[:200]}...")
+            
+            # Check if we're using video reference mode
+            if self.use_video_reference:
+                logger.info(f"🎥 VIDEO REFERENCE MODE: Generating {self.selected_dance} dance from reference video")
+                return self.generate_video_to_video(enhanced_prompt)
+            else:
+                logger.info("🖼️ IMAGE-TO-VIDEO MODE: Generating from DALL-E base image")
+                return self.generate_image_to_video(enhanced_prompt)
+                
+        except Exception as e:
+            logger.error(f"❌ Error generating enhanced RunwayML video: {e}")
+            import traceback
+            traceback.print_exc()
+            return False
+    
+    def generate_video_to_video(self, enhanced_prompt):
+        """Generate video using video reference (video-to-video)"""
+        try:
+            logger.info(f"🎥 Starting VIDEO-TO-VIDEO generation for {self.selected_dance} dance...")
+            
+            # Find the reference video
+            reference_video_path = self.find_reference_video()
+            if not reference_video_path:
+                logger.error("❌ Reference video not found, falling back to image-to-video")
+                return self.generate_image_to_video(enhanced_prompt)
+            
+            # Convert reference video to base64
+            reference_video_data = self.convert_video_to_base64(reference_video_path)
+            if not reference_video_data:
+                logger.error("❌ Failed to convert reference video, falling back to image-to-video")
+                return self.generate_image_to_video(enhanced_prompt)
+            
+            # Enhanced RunwayML Gen-3a API request for video-to-video
+            headers = {
+                "Authorization": f"Bearer {self.runwayml_api_key}",
+                "Content-Type": "application/json",
+                "X-Runway-Version": "2024-11-06"
+            }
+            
+            # Build enhanced payload for VIDEO-TO-VIDEO generation
+            payload = {
+                "promptVideo": reference_video_data,
+                "promptText": enhanced_prompt,
+                "model": self.model,
+                "aspectRatio": self.aspect_ratio,
+                "duration": min(self.duration, 10),
+                "seed": self.motion_seed,
+                "watermark": self.watermark,
+                "interpolate": self.interpolate,
+                "loop": self.loop
+            }
+            
+            # Add video reference specific settings
+            payload["referenceStrength"] = self.reference_strength
+            
+            # Add enhanced negative prompt if provided
+            if self.runway_negative_prompt:
+                payload["negativePrompt"] = self.runway_negative_prompt
+                logger.info(f"🚫 Using enhanced negative prompt: {self.runway_negative_prompt}")
+            
+            # ENHANCED camera control for professional results
+            if self.camera_motion == 0:
+                payload["cameraMotion"] = {
+                    "type": "static",
+                    "strength": 0
+                }
+                logger.info("🎯 ENHANCED CAMERA SET TO STATIC - ZERO MOVEMENT")
+            
+            # ADVANCED motion control for enhanced natural movement
+            payload["motionBrush"] = {
+                "strength": self.motion_strength,
+                "guidance": self.motion_guidance
+            }
+            
+            logger.info("🚀 Sending VIDEO-TO-VIDEO request to RunwayML Gen-3a...")
+            logger.info(f"📊 Enhanced Payload: dance={self.selected_dance}, ref_strength={self.reference_strength}, duration={min(self.duration, 10)}s")
+            
+            # Use video-to-video API endpoint
+            response = requests.post(
+                "https://api.dev.runwayml.com/v1/video_to_video",
+                headers=headers,
+                json=payload,
+                timeout=120
+            )
+            
+            if response.status_code == 200:
+                result = response.json()
+                task_id = result.get('id')
+                
+                logger.info(f"✅ VIDEO-TO-VIDEO generation started! Task ID: {task_id}")
+                
+                # Poll for completion
+                video_url = self.poll_for_enhanced_completion(task_id, headers)
+                
+                if video_url:
+                    # Download the generated video
+                    video_data = self.download_video(video_url)
+                    
+                    if video_data:
+                        self.save_and_process_enhanced_video(video_data, enhanced_prompt)
+                        return True
+                    else:
+                        logger.error("❌ Failed to download generated video")
+                        return False
+                else:
+                    logger.error("❌ VIDEO-TO-VIDEO generation failed or timed out")
+                    return False
+                    
+            else:
+                logger.error(f"❌ RunwayML VIDEO-TO-VIDEO API error: {response.status_code}")
+                logger.error(f"Error details: {response.text}")
+                
+                # Fallback to image-to-video if video-to-video fails
+                logger.info("🔄 Falling back to image-to-video generation...")
+                return self.generate_image_to_video(enhanced_prompt)
+                
+        except Exception as e:
+            logger.error(f"❌ Error in video-to-video generation: {e}")
+            # Fallback to image-to-video
+            logger.info("🔄 Falling back to image-to-video generation...")
+            return self.generate_image_to_video(enhanced_prompt)
+    
+    def generate_image_to_video(self, enhanced_prompt):
+        """Generate video using base image (image-to-video) - original method"""
+        try:
+            logger.info("🖼️ Starting IMAGE-TO-VIDEO generation...")
             
             # First, generate base image for video generation
             logger.info("🖼️ Generating enhanced base image...")
@@ -208,9 +391,9 @@ class EnhancedRunwayMLVideoBot:
                 "promptImage": data_uri,
                 "promptText": enhanced_prompt,
                 "model": self.model,
-                "aspectRatio": self.aspect_ratio,  # Use enhanced aspect ratio
-                "duration": min(self.duration, 10),  # Cap at 10 seconds for API limits
-                "seed": self.motion_seed,  # Now properly handled as int
+                "aspectRatio": self.aspect_ratio,
+                "duration": min(self.duration, 10),
+                "seed": self.motion_seed,
                 "watermark": self.watermark,
                 "interpolate": self.interpolate,
                 "loop": self.loop
@@ -231,13 +414,12 @@ class EnhancedRunwayMLVideoBot:
             
             # ADVANCED motion control for enhanced natural movement
             payload["motionBrush"] = {
-                "strength": self.motion_strength,  # Enhanced strength (6)
-                "guidance": self.motion_guidance   # Enhanced guidance (12)
+                "strength": self.motion_strength,
+                "guidance": self.motion_guidance
             }
             
-            logger.info("🚀 Sending ENHANCED request to RunwayML Gen-3a...")
-            logger.info(f"📊 Enhanced Payload: camera=static, duration={min(self.duration, 10)}s, strength={self.motion_strength}, guidance={self.motion_guidance}, seed={self.motion_seed}")
-            logger.info(f"🎬 Quality Features: {len(self.motion_descriptors)} motion terms, {len(self.visual_quality)} visual terms")
+            logger.info("🚀 Sending IMAGE-TO-VIDEO request to RunwayML Gen-3a...")
+            logger.info(f"📊 Enhanced Payload: duration={min(self.duration, 10)}s, strength={self.motion_strength}, guidance={self.motion_guidance}")
             
             # Generate video using enhanced RunwayML API
             response = requests.post(
@@ -251,7 +433,7 @@ class EnhancedRunwayMLVideoBot:
                 result = response.json()
                 task_id = result.get('id')
                 
-                logger.info(f"✅ ENHANCED video generation started! Task ID: {task_id}")
+                logger.info(f"✅ IMAGE-TO-VIDEO generation started! Task ID: {task_id}")
                 
                 # Poll for completion with extended timeout for longer videos
                 video_url = self.poll_for_enhanced_completion(task_id, headers)
@@ -347,13 +529,19 @@ class EnhancedRunwayMLVideoBot:
                     status = result.get('status')
                     progress = result.get('progress', 0)
                     
-                    logger.info(f"🔄 Enhanced generation status: {status} - Progress: {progress}%")
+                    if self.use_video_reference:
+                        logger.info(f"🔄 VIDEO-TO-VIDEO status: {status} - Progress: {progress}%")
+                    else:
+                        logger.info(f"🔄 Enhanced generation status: {status} - Progress: {progress}%")
                     
                     if status == 'SUCCEEDED':
                         output = result.get('output', [])
                         if output and len(output) > 0:
                             video_url = output[0]
-                            logger.info("🎉 ENHANCED video generation completed!")
+                            if self.use_video_reference:
+                                logger.info("🎉 VIDEO-TO-VIDEO generation completed!")
+                            else:
+                                logger.info("🎉 ENHANCED video generation completed!")
                             return video_url
                         else:
                             logger.error("❌ No output URL found")
@@ -399,141 +587,7 @@ class EnhancedRunwayMLVideoBot:
         """Save the enhanced generated video and prepare for processing"""
         try:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"runwayml_generation_{timestamp}.mp4"
-            
-            with open(filename, 'wb') as f:
-                f.write(video_data)
-            logger.info(f"💾 Enhanced video saved as: {filename}")
-            
-            # Copy video to expected animation output
-            with open("final_animation.mp4", 'wb') as f:
-                f.write(video_data)
-            
-            logger.info("🎬 ENHANCED DEUCE DANCING VIDEO GENERATED WITH ADVANCED CONTROLS!")
-            logger.info("📱 Professional quality ready for social media upload!")
-            logger.info(f"🎯 Enhanced features: {self.motion_strength} motion strength, {self.motion_guidance} guidance, {self.duration}s duration")
-            
-            return True
-            
-        except Exception as e:
-            logger.error(f"❌ Error saving enhanced video: {e}")
-            return False
-    
-    def generate_enhanced_dalle_base_image(self, enhanced_prompt):
-        """Generate enhanced base image using DALL-E with advanced setup for Deuce's human-like dancing animation"""
-        try:
-            openai_api_key = os.getenv('OPENAI_API_KEY')
-            if not openai_api_key:
-                logger.error("❌ OPENAI_API_KEY not found")
-                return False
-            
-            headers = {
-                "Authorization": f"Bearer {openai_api_key}",
-                "Content-Type": "application/json"
-            }
-            
-            # ENHANCED base image prompt with quality descriptors
-            if 'dancing' in self.animation_type:
-                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes, standing upright on hind legs like a human person next to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce appears ready to dance like a human with {', '.join(self.dance_quality[:2])}, front paws positioned like human arms, standing in anthropomorphic upright pose beside the fancy plated food. {self.lighting.replace('_', ' ')}, {', '.join(self.visual_quality[:2])}, shallow depth of field. The scene captures the moment before Deuce starts {', '.join(self.motion_descriptors[:2])} human-like dancing."
-            elif 'eating' in self.animation_type:
-                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes positioned close to an elegant white ceramic plate with beautifully presented gourmet trending food. Deuce's head is tilted toward the food, mouth slightly open near the dish, captured in natural pre-eating position with {', '.join(self.motion_descriptors[:1])}. {self.lighting.replace('_', ' ')}, {', '.join(self.visual_quality[:2])}, shallow depth of field."
+            if self.use_video_reference:
+                filename = f"runwayml_video_ref_{self.selected_dance}_{timestamp}.mp4"
             else:
-                dalle_prompt = f"Deuce, a tiny fluffy Shih Tzu puppy with big expressive eyes near an elegant white ceramic plate with beautifully presented trending food. {self.lighting.replace('_', ' ')}, clean background, fancy plating, {', '.join(self.visual_quality[:2])}, high detail."
-            
-            payload = {
-                "model": "dall-e-3",
-                "prompt": dalle_prompt,
-                "n": 1,
-                "size": "1024x1024",
-                "quality": "hd",
-                "style": "vivid"
-            }
-            
-            logger.info("🎨 Generating ENHANCED base image for Deuce's dancing...")
-            logger.info(f"🖼️ Enhanced DALL-E prompt: {dalle_prompt[:150]}...")
-            
-            response = requests.post(
-                "https://api.openai.com/v1/images/generations",
-                headers=headers,
-                json=payload,
-                timeout=60
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                image_url = result['data'][0]['url']
-                
-                # Download the image
-                img_response = requests.get(image_url, timeout=30)
-                if img_response.status_code == 200:
-                    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                    filename = f"dalle_generation_{timestamp}.png"
-                    
-                    with open(filename, 'wb') as f:
-                        f.write(img_response.content)
-                    
-                    logger.info(f"✅ ENHANCED base image saved: {filename}")
-                    return True
-                else:
-                    logger.error("❌ Failed to download enhanced DALL-E image")
-                    return False
-            else:
-                logger.error(f"❌ Enhanced DALL-E API error: {response.status_code}")
-                logger.error(f"Enhanced DALL-E error details: {response.text}")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Error generating enhanced DALL-E base image: {e}")
-            return False
-    
-    def run_enhanced_generation_mission(self):
-        """Execute the complete enhanced video generation mission"""
-        try:
-            logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION STARTING...")
-            logger.info(f"📅 Enhanced mission time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-            logger.info(f"🎭 Animation type: {self.animation_type}")
-            logger.info(f"📝 Base prompt: {self.prompt}")
-            logger.info(f"🎯 Enhanced camera control: STATIC (motion={self.camera_motion})")
-            logger.info(f"💪 Enhanced motion strength: {self.motion_strength}")
-            logger.info(f"🎯 Enhanced motion guidance: {self.motion_guidance}")
-            logger.info(f"⏱️  Enhanced duration: {self.duration} seconds")
-            logger.info(f"🎥 Enhanced FPS: {self.fps}")
-            logger.info(f"🕺 Enhanced concept: Deuce the Shih Tzu dancing like a human with professional quality")
-            
-            success = self.generate_runwayml_video()
-            
-            if success:
-                logger.info("✅ ENHANCED DEUCE DANCING VIDEO GENERATION ACCOMPLISHED!")
-                logger.info("🎯 Enhanced camera stayed static, Deuce remained centered with fluid motion!")
-                logger.info(f"🎬 Quality features: {len(self.motion_descriptors)} motion terms, {len(self.visual_quality)} visual enhancements")
-                return True
-            else:
-                logger.error("❌ Enhanced video generation failed")
-                return False
-                
-        except Exception as e:
-            logger.error(f"❌ Enhanced mission failed: {e}")
-            return False
-
-def main():
-    """Main entry point for enhanced RunwayML video bot"""
-    logger.info("🎬 ENHANCED RUNWAYML AI VIDEO GENERATION BOT v2.0")
-    logger.info("🚀 Creating PROFESSIONAL animated Deuce the Shih Tzu dancing videos with advanced controls")
-    logger.info("🕺 Featuring enhanced human-like dance moves with professional quality motion")
-    
-    if os.getenv('GITHUB_ACTIONS'):
-        logger.info("☁️ Operating in GitHub Actions environment with enhanced parameters")
-    
-    # Create and run the enhanced RunwayML bot
-    video_bot = EnhancedRunwayMLVideoBot()
-    success = video_bot.run_enhanced_generation_mission()
-    
-    if success:
-        logger.info("✅ ENHANCED DEUCE DANCING VIDEO MISSION ACCOMPLISHED!")
-        sys.exit(0)
-    else:
-        logger.error("❌ ENHANCED DEUCE DANCING VIDEO MISSION FAILED!")
-        sys.exit(1)
-
-if __name__ == "__main__":
-    main()
+                filename = f"runwayml_generation_{timestamp}.mp4"

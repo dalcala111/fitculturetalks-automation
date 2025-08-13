@@ -1,7 +1,7 @@
 name: "Ultimate RunwayML Deuce Dancing Generator"
 on:
   repository_dispatch:
-    types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video]
+    types: [trigger-midjourney, create-masterpiece, trigger-shih-tzu-food-video, trigger-shih-tzu-video-reference]
   workflow_dispatch:
     inputs:
       prompt:
@@ -35,9 +35,40 @@ jobs:
         rm -f *.mp4
         rm -f *.mp3
         rm -f *.wav
+        rm -f reference_video.*
         echo "✅ Previous files cleared"
         echo "📁 Current directory after cleanup:"
         ls -la
+
+    # NEW: Download Reference Video Step
+    - name: Download Reference Video
+      if: github.event.client_payload.use_video_reference == true
+      env:
+        REFERENCE_VIDEO_URL: ${{ github.event.client_payload.reference_video_url }}
+        SELECTED_DANCE: ${{ github.event.client_payload.selected_dance || 'macarena' }}
+      run: |
+        echo "🎥 Downloading reference video for $SELECTED_DANCE dance..."
+        echo "📺 URL: $REFERENCE_VIDEO_URL"
+        
+        # Install yt-dlp for YouTube video downloading
+        pip install yt-dlp
+        
+        # Download the reference video in appropriate quality
+        yt-dlp -f "best[height<=720]" -o "reference_video.%(ext)s" "$REFERENCE_VIDEO_URL"
+        
+        # Verify download
+        if ls reference_video.* 1> /dev/null 2>&1; then
+          echo "✅ Reference video downloaded successfully!"
+          ls -la reference_video.*
+          
+          # Get video info
+          pip install ffmpeg-python
+          echo "📊 Reference video info:"
+          ffprobe -v quiet -print_format json -show_format -show_streams reference_video.* | head -20
+        else
+          echo "❌ Failed to download reference video"
+          exit 1
+        fi
       
     - name: Setup Python
       uses: actions/setup-python@v4
@@ -58,6 +89,11 @@ jobs:
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
         RUNWAY_NEGATIVE_PROMPT: ${{ github.event.client_payload.runway_negative_prompt }}
+        USE_VIDEO_REFERENCE: ${{ github.event.client_payload.use_video_reference || 'false' }}
+        REFERENCE_VIDEO_URL: ${{ github.event.client_payload.reference_video_url }}
+        SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
+        REFERENCE_STRENGTH: ${{ github.event.client_payload.runway_settings.reference_strength || '0.8' }}
+        VIDEO_TO_VIDEO: ${{ github.event.client_payload.runway_settings.video_to_video || 'false' }}
         CAMERA_MOTION: ${{ github.event.client_payload.runway_settings.camera_motion || '0' }}
         MOTION_STRENGTH: ${{ github.event.client_payload.runway_settings.motion_strength || '6' }}
         MOTION_GUIDANCE: ${{ github.event.client_payload.runway_settings.motion_guidance || '12' }}
@@ -75,6 +111,11 @@ jobs:
         echo "Primary prompt: $PROMPT"
         echo "Deuce dancing motion prompt: $DANCING_MOTION_PROMPT"
         echo "Negative prompt: $RUNWAY_NEGATIVE_PROMPT"
+        echo "🎥 VIDEO REFERENCE MODE: $USE_VIDEO_REFERENCE"
+        echo "📺 Reference video URL: $REFERENCE_VIDEO_URL"
+        echo "💃 Selected dance: $SELECTED_DANCE"
+        echo "🎯 Reference strength: $REFERENCE_STRENGTH"
+        echo "🎬 Video-to-video mode: $VIDEO_TO_VIDEO"
         echo "Camera motion: $CAMERA_MOTION (0 = static)"
         echo "Motion strength: $MOTION_STRENGTH"
         echo "Motion guidance: $MOTION_GUIDANCE"
@@ -93,6 +134,13 @@ jobs:
         # Primary prompt settings
         PROMPT: ${{ github.event.client_payload.runway_prompt || github.event.client_payload.prompt || github.event.inputs.prompt || 'Deuce the adorable Shih Tzu dancing like a human next to delicious trending food dish' }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || github.event.inputs.animation_type || 'dancing' }}
+        
+        # NEW: Video reference settings
+        USE_VIDEO_REFERENCE: ${{ github.event.client_payload.use_video_reference || 'false' }}
+        REFERENCE_VIDEO_URL: ${{ github.event.client_payload.reference_video_url }}
+        SELECTED_DANCE: ${{ github.event.client_payload.selected_dance || 'macarena' }}
+        REFERENCE_STRENGTH: ${{ github.event.client_payload.runway_settings.reference_strength || '0.8' }}
+        VIDEO_TO_VIDEO: ${{ github.event.client_payload.runway_settings.video_to_video || 'false' }}
         
         # Enhanced dancing-specific motion settings from consolidated runway_settings
         DANCING_MOTION_PROMPT: ${{ github.event.client_payload.dancing_motion_prompt }}
@@ -151,6 +199,10 @@ jobs:
         echo "🎬 Generating ENHANCED animated Deuce dancing video with RunwayML..."
         echo "🕺 Human-like dancing animation with STATIC camera and enhanced motion quality"
         echo "Animation type: $ANIMATION_TYPE"
+        echo "🎥 Using video reference: $USE_VIDEO_REFERENCE"
+        echo "💃 Dance type: $SELECTED_DANCE"
+        echo "🎯 Reference strength: $REFERENCE_STRENGTH"
+        echo "🎬 Video-to-video mode: $VIDEO_TO_VIDEO"
         echo "Camera motion: $CAMERA_MOTION (0 = completely static)"
         echo "Motion strength: $MOTION_STRENGTH (enhanced for better dance moves)"
         echo "Motion guidance: $MOTION_GUIDANCE (increased precision)"
@@ -333,17 +385,18 @@ jobs:
                 # Get recipe text from GitHub Actions environment
                 recipe_from_payload = os.environ.get('RECIPE_TEXT', '')
                 animation_type = os.environ.get('ANIMATION_TYPE', 'dancing')
+                selected_dance = os.environ.get('SELECTED_DANCE', 'macarena')
                 
                 if recipe_from_payload:
                     self.recipe_text = recipe_from_payload
                 else:
-                    # Generate cute Deuce text based on animation type
+                    # Generate cute Deuce text based on animation type and dance
                     deuce_texts = {
                         'emergence': "✨ Deuce discovers amazing food! So precious! 🐕💫",
                         'eating': "😋 Watch Deuce enjoy delicious food! So adorable! 🍽️❤️",
-                        'dancing': "🎵 Deuce dances like a human! This little angel has the smoothest moves! 💃🐕✨"
+                        'dancing': f"🎵 Deuce does the {selected_dance.title()}! This little angel has the smoothest moves! 💃🐕✨"
                     }
-                    self.recipe_text = deuce_texts.get(animation_type, "🐕 Deuce's most adorable human-like dancing adventure! ✨")
+                    self.recipe_text = deuce_texts.get(animation_type, f"🐕 Deuce's most adorable {selected_dance} dancing adventure! ✨")
                     
                 print(f"📝 Video text: {self.recipe_text[:50]}...")
                 
@@ -516,6 +569,7 @@ jobs:
       env:
         RECIPE_TEXT: ${{ github.event.client_payload.recipe_text }}
         ANIMATION_TYPE: ${{ github.event.client_payload.animation_type || 'dancing' }}
+        SELECTED_DANCE: ${{ github.event.client_payload.selected_dance || 'macarena' }}
       run: |
         echo "🎬 Launching enhanced RunwayML Deuce dancing video processing..."
         python3 advanced_video_editor.py
@@ -528,6 +582,7 @@ jobs:
         path: |
           runwayml_generation_*.mp4
           final_animation.mp4
+          reference_video.*
         retention-days: 30
 
     - name: Upload RunwayML Deuce Dancing Masterpiece
@@ -538,6 +593,7 @@ jobs:
         path: |
           tiktok_masterpiece.mp4
           final_animation.mp4
+          reference_video.*
           *.mp3
           *.wav
         retention-days: 30
@@ -547,21 +603,30 @@ jobs:
       run: |
         echo "## 🕺 ENHANCED RUNWAYML DEUCE DANCING MASTERPIECE GENERATED! ✨" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "### 🚀 Your Professional AI Dancing Video Package (Enhanced):" >> $GITHUB_STEP_SUMMARY
+        echo "### 🚀 Your Professional AI Dancing Video Package (Enhanced with Video Reference):" >> $GITHUB_STEP_SUMMARY
         
         if [ -f "tiktok_masterpiece.mp4" ]; then
           VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
           ANIMATION_TYPE="${{ github.event.client_payload.animation_type || 'dancing' }}"
+          SELECTED_DANCE="${{ github.event.client_payload.selected_dance || 'macarena' }}"
+          USE_VIDEO_REF="${{ github.event.client_payload.use_video_reference || 'false' }}"
           echo "- 🎥 **Enhanced RunwayML Deuce Dancing Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
           echo "- 🤖 **AI Technology:** RunwayML Gen-3a with Enhanced Motion Quality" >> $GITHUB_STEP_SUMMARY
+          echo "- 💃 **Dance Type:** $SELECTED_DANCE (Reference-guided)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎬 **Generation Mode:** $( [[ "$USE_VIDEO_REF" == "true" ]] && echo "Video-to-Video (Reference-based)" || echo "Text-to-Video" )" >> $GITHUB_STEP_SUMMARY
           echo "- 🎯 **Camera Control:** Static positioning with enhanced stability" >> $GITHUB_STEP_SUMMARY
-          echo "- 🕺 **Star:** Deuce the Shih Tzu with smooth fluid human-like dancing" >> $GITHUB_STEP_SUMMARY
+          echo "- 🕺 **Star:** Deuce the Shih Tzu with smooth fluid human-like $SELECTED_DANCE dancing" >> $GITHUB_STEP_SUMMARY
           echo "- 📱 **Format:** 1080x1920 (Perfect 9:16 optimized)" >> $GITHUB_STEP_SUMMARY
           echo "- ⏱️ **Duration:** Extended 10-second professional videos" >> $GITHUB_STEP_SUMMARY
           echo "- 🎬 **Quality:** Cinema-grade AI animation with motion enhancements" >> $GITHUB_STEP_SUMMARY
           echo "- 🎨 **Movement:** Enhanced human-like dancing with professional choreography" >> $GITHUB_STEP_SUMMARY
           echo "- ⚡ **Motion Settings:** Strength: ${{ github.event.client_payload.runway_settings.motion_strength || '6' }}, Guidance: ${{ github.event.client_payload.runway_settings.motion_guidance || '12' }}" >> $GITHUB_STEP_SUMMARY
           echo "- 🎯 **FPS:** ${{ github.event.client_payload.runway_settings.fps || '30' }} fps for ultra-smooth motion" >> $GITHUB_STEP_SUMMARY
+          
+          if [[ "$USE_VIDEO_REF" == "true" ]]; then
+            echo "- 📺 **Reference Video:** Used for precise $SELECTED_DANCE choreography" >> $GITHUB_STEP_SUMMARY
+            echo "- 🎯 **Reference Strength:** ${{ github.event.client_payload.runway_settings.reference_strength || '0.8' }}" >> $GITHUB_STEP_SUMMARY
+          fi
         fi
         
         echo "" >> $GITHUB_STEP_SUMMARY
@@ -572,10 +637,16 @@ jobs:
         echo "- 📷 Static camera with enhanced stability controls" >> $GITHUB_STEP_SUMMARY
         echo "- 🎨 Photorealistic quality with cinematic lighting" >> $GITHUB_STEP_SUMMARY
         echo "- 🎵 Rhythmic tempo matching for perfect dance synchronization" >> $GITHUB_STEP_SUMMARY
+        
+        if [[ "${{ github.event.client_payload.use_video_reference }}" == "true" ]]; then
+          echo "- 🎥 **Reference-guided precision:** Exact ${{ github.event.client_payload.selected_dance || 'macarena' }} choreography" >> $GITHUB_STEP_SUMMARY
+          echo "- 💃 **Motion accuracy:** Video-to-video generation for realistic moves" >> $GITHUB_STEP_SUMMARY
+        fi
+        
         echo "" >> $GITHUB_STEP_SUMMARY
         echo "**Optimized for platforms:** TikTok • YouTube Shorts • Instagram Reels" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        echo "**🕺 DEUCE DANCING LEVEL: PROFESSIONAL ENHANCED ✨**" >> $GITHUB_STEP_SUMMARY
+        echo "**🕺 DEUCE DANCING LEVEL: PROFESSIONAL ENHANCED WITH VIDEO REFERENCE ✨**" >> $GITHUB_STEP_SUMMARY
 
     - name: Job completed
       if: always()

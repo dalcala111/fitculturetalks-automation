@@ -128,29 +128,32 @@ jobs:
                 
             headers = {
                 'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-                'X-Runway-Version': '2024-11-06'
+                'Content-Type': 'application/json'
             }
             
+            # Simple payload based on RunwayML docs
             payload = {
-                "promptText": prompt,
-                "promptVideo": reference_video_b64,
+                "textPrompt": prompt,
+                "videoPrompt": f"data:video/mp4;base64,{reference_video_b64}",
                 "duration": 10,
-                "aspectRatio": "9:16",
-                "watermark": False
+                "aspectRatio": "9:16"
             }
             
             print("🚀 Sending request to RunwayML...")
+            print(f"📊 Payload keys: {list(payload.keys())}")
             
             try:
+                # Try the video generation endpoint
                 response = requests.post(
-                    'https://api.dev.runwayml.com/v1/image_to_video',
+                    'https://api.dev.runwayml.com/v1/video/generate',
                     headers=headers,
                     json=payload,
-                    timeout=30
+                    timeout=60
                 )
                 
-                if response.status_code == 200:
+                print(f"📡 Response status: {response.status_code}")
+                
+                if response.status_code in [200, 201, 202]:
                     result = response.json()
                     print(f"✅ RunwayML request successful: {result}")
                     
@@ -161,7 +164,30 @@ jobs:
                 else:
                     print(f"❌ RunwayML API error: {response.status_code}")
                     print(f"Response: {response.text}")
-                    return False
+                    
+                    # Try alternative endpoint if first fails
+                    print("🔄 Trying alternative endpoint...")
+                    alt_response = requests.post(
+                        'https://api.dev.runwayml.com/v1/generations',
+                        headers=headers,
+                        json={
+                            "prompt": prompt,
+                            "init_video": f"data:video/mp4;base64,{reference_video_b64}",
+                            "duration": 10
+                        },
+                        timeout=60
+                    )
+                    
+                    if alt_response.status_code in [200, 201, 202]:
+                        result = alt_response.json()
+                        print(f"✅ Alternative endpoint successful: {result}")
+                        with open('runway_task.json', 'w') as f:
+                            json.dump(result, f, indent=2)
+                        return True
+                    else:
+                        print(f"❌ Alternative endpoint also failed: {alt_response.status_code}")
+                        print(f"Response: {alt_response.text}")
+                        return False
                     
             except Exception as e:
                 print(f"❌ Request failed: {e}")

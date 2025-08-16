@@ -128,7 +128,8 @@ jobs:
                 
             headers = {
                 'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Runway-Version': '2024-11-06'
             }
             
             payload = {
@@ -180,69 +181,17 @@ jobs:
 
     - name: Create fallback video
       if: failure()
-      env:
-        RUNWAY_PROMPT: ${{ github.event.client_payload.runway_prompt }}
-        SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
       run: |
         echo "🔄 Creating fallback video..."
-        
-        cat > create_fallback.py << 'EOF'
-        import cv2
-        import numpy as np
-        import os
-
-        def create_fallback():
-            """Create a simple fallback video"""
-            if not os.path.exists("reference_video.mp4"):
-                print("❌ No reference video for fallback")
-                return False
-                
-            # Read first frame from reference video
-            cap = cv2.VideoCapture("reference_video.mp4")
-            ret, frame = cap.read()
-            cap.release()
-            
-            if not ret:
-                print("❌ Could not read reference video")
-                return False
-                
-            # Resize to vertical format
-            height, width = frame.shape[:2]
-            target_width, target_height = 1080, 1920
-            
-            # Calculate scaling
-            scale = min(target_width/width, target_height/height)
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            
-            # Resize frame
-            resized = cv2.resize(frame, (new_width, new_height))
-            
-            # Create video writer
-            fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-            out = cv2.VideoWriter('final_animation.mp4', fourcc, 30.0, (1080, 1920))
-            
-            # Create canvas
-            canvas = np.ones((1920, 1080, 3), dtype=np.uint8) * 255
-            
-            # Center the frame
-            y_offset = (1920 - new_height) // 2
-            x_offset = (1080 - new_width) // 2
-            canvas[y_offset:y_offset+new_height, x_offset:x_offset+new_width] = resized
-            
-            # Write 300 frames (10 seconds at 30fps)
-            for i in range(300):
-                out.write(canvas)
-                
-            out.release()
-            print("✅ Fallback video created")
-            return True
-
-        if __name__ == "__main__":
-            create_fallback()
-        EOF
-        
-        python create_fallback.py
+        if [ ! -f "final_animation.mp4" ] && [ -f "reference_video.mp4" ]; then
+          echo "📹 Using reference video as fallback"
+          cp reference_video.mp4 final_animation.mp4
+          echo "✅ Fallback video created"
+        elif [ -f "final_animation.mp4" ]; then
+          echo "✅ Video already exists, no fallback needed"
+        else
+          echo "❌ No video available for fallback"
+        fi
 
     - name: Process final video
       env:

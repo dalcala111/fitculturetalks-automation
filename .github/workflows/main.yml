@@ -128,24 +128,29 @@ jobs:
                 
             headers = {
                 'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Runway-Version': '2024-11-06'
             }
             
-            # Simple payload based on RunwayML docs
+            # Use original working payload structure
             payload = {
-                "textPrompt": prompt,
-                "videoPrompt": f"data:video/mp4;base64,{reference_video_b64}",
+                "promptVideo": f"data:video/mp4;base64,{reference_video_b64}",
+                "promptText": prompt,
+                "model": "gen3a",
+                "aspectRatio": "9:16",
                 "duration": 10,
-                "aspectRatio": "9:16"
+                "watermark": False,
+                "interpolate": True,
+                "loop": False
             }
             
             print("🚀 Sending request to RunwayML...")
-            print(f"📊 Payload keys: {list(payload.keys())}")
+            print(f"📊 Using model: gen3a, duration: 10s")
             
             try:
-                # Try the video generation endpoint
+                # Use video-to-video endpoint like the original
                 response = requests.post(
-                    'https://api.dev.runwayml.com/v1/video/generate',
+                    'https://api.dev.runwayml.com/v1/video_to_video',
                     headers=headers,
                     json=payload,
                     timeout=60

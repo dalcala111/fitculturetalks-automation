@@ -89,7 +89,7 @@ jobs:
         echo "📝 Prompt: $RUNWAY_PROMPT"
         echo "💃 Dance: $SELECTED_DANCE"
         
-        cat > runway_generator.py << 'EOF'
+        cat > runway_generator_fixed.py << 'EOF'
         import requests
         import json
         import os
@@ -97,12 +97,10 @@ jobs:
         import base64
 
         def upload_reference_video():
-            """Upload reference video to RunwayML"""
             if not os.path.exists("reference_video.mp4"):
                 print("❌ Reference video not found")
                 return None
                 
-            # Read video file
             with open("reference_video.mp4", "rb") as f:
                 video_data = f.read()
                 
@@ -110,7 +108,6 @@ jobs:
             return base64.b64encode(video_data).decode('utf-8')
 
         def generate_video():
-            """Generate video using RunwayML with reference video"""
             api_key = os.environ.get('RUNWAYML_API_KEY')
             prompt = os.environ.get('RUNWAY_PROMPT', '')
             
@@ -124,13 +121,11 @@ jobs:
                 
             print(f"🎯 Using prompt: {prompt[:100]}...")
             
-            # Upload reference video
             reference_video_b64 = upload_reference_video()
             if not reference_video_b64:
                 print("❌ Failed to upload reference video")
                 return False
                 
-            # RunwayML API call
             headers = {
                 'Authorization': f'Bearer {api_key}',
                 'Content-Type': 'application/json'
@@ -142,15 +137,14 @@ jobs:
                 "duration": 10,
                 "ratio": "9:16",
                 "watermark": False,
-                "motionScore": 7,
-                "seed": None
+                "motionScore": 7
             }
             
             print("🚀 Sending request to RunwayML...")
             
             try:
                 response = requests.post(
-                    'https://api.runwayml.com/v1/image_to_video',
+                    'https://api.dev.runwayml.com/v1/image_to_video',
                     headers=headers,
                     json=payload,
                     timeout=30
@@ -160,7 +154,6 @@ jobs:
                     result = response.json()
                     print(f"✅ RunwayML request successful: {result}")
                     
-                    # Save task info
                     with open('runway_task.json', 'w') as f:
                         json.dump(result, f, indent=2)
                         
@@ -183,7 +176,7 @@ jobs:
                 exit(1)
         EOF
         
-        python runway_generator.py
+        python runway_generator_fixed.py
 
     - name: Create fallback video
       if: failure()

@@ -129,7 +129,8 @@ jobs:
             # Step 1: Upload video to RunwayML first
             upload_headers = {
                 'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'X-Runway-Version': '2024-11-06'
             }
             
             # Encode video as base64 for JSON upload

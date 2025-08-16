@@ -129,7 +129,15 @@ jobs:
             # Step 1: Upload video to RunwayML first
             upload_headers = {
                 'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'video/mp4'
+                'Content-Type': 'application/json'
+            }
+            
+            # Encode video as base64 for JSON upload
+            video_b64 = base64.b64encode(reference_video_data).decode('utf-8')
+            
+            upload_payload = {
+                "type": "video",
+                "data": f"data:video/mp4;base64,{video_b64}"
             }
             
             print("📤 Uploading video to RunwayML...")
@@ -137,7 +145,7 @@ jobs:
                 upload_response = requests.post(
                     'https://api.dev.runwayml.com/v1/assets',
                     headers=upload_headers,
-                    data=reference_video_data,
+                    json=upload_payload,
                     timeout=120
                 )
                 

@@ -118,7 +118,7 @@ class OptimizedReferenceVideoGenerator:
             
             # Use the correct RunwayML API endpoint
             response = requests.post(
-                "https://api.runwayml.com/v1/image_to_video",  # Adjust if different
+                "https://api.dev.runwayml.com/v1/image_to_video",
                 headers=headers,
                 json=payload,
                 timeout=120
@@ -158,7 +158,7 @@ class OptimizedReferenceVideoGenerator:
         while time.time() - start_time < max_wait:
             try:
                 response = requests.get(
-                    f"https://api.runwayml.com/v1/tasks/{task_id}",
+                    f"https://api.dev.runwayml.com/v1/tasks/{task_id}",
                     headers=headers,
                     timeout=30
                 )

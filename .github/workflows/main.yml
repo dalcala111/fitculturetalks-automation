@@ -134,11 +134,10 @@ jobs:
             
             payload = {
                 "promptText": prompt,
-                "init_video": reference_video_b64,
+                "promptVideo": reference_video_b64,
                 "duration": 10,
-                "ratio": "9:16",
-                "watermark": False,
-                "motionScore": 7
+                "aspectRatio": "9:16",
+                "watermark": False
             }
             
             print("🚀 Sending request to RunwayML...")

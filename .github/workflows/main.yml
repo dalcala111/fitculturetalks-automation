@@ -13,7 +13,7 @@ on:
 jobs:
   generate-deuce-dance-video:
     runs-on: ubuntu-latest
-    
+
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -33,7 +33,7 @@ jobs:
     - name: Clean workspace
       run: |
         echo "🧹 Cleaning workspace..."
-        rm -f *.mp4 *.png *.jpg *.wav *.mp3
+        rm -f *.mp4 *.png *.jpg *.wav *.mp3 runway_task.json || true
         echo "✅ Workspace cleaned"
 
     - name: Download reference video
@@ -41,19 +41,14 @@ jobs:
         REFERENCE_VIDEO_URL: ${{ github.event.client_payload.reference_video_url }}
         SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
       run: |
+        set -euo pipefail
         echo "🎥 Downloading reference video for $SELECTED_DANCE..."
         echo "📺 URL: $REFERENCE_VIDEO_URL"
-        
         if [ -z "$REFERENCE_VIDEO_URL" ]; then
           echo "❌ ERROR: Reference video URL is empty!"
-          echo "Check your n8n workflow - reference_video_url is not being sent"
           exit 1
         fi
-        
-        # Download the reference video
-        curl -L -o "reference_video.mp4" "$REFERENCE_VIDEO_URL"
-        
-        # Verify download
+        curl -sSLo reference_video.mp4 -fL "$REFERENCE_VIDEO_URL"
         if [ -f "reference_video.mp4" ] && [ -s "reference_video.mp4" ]; then
           echo "✅ Reference video downloaded successfully!"
           ls -la reference_video.mp4
@@ -66,11 +61,11 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
-        
-    - name: Install dependencies
+
+    - name: Install Python deps
       run: |
         python -m pip install --upgrade pip
-        pip install requests pillow opencv-python numpy imageio imageio-ffmpeg
+        pip install requests
         echo "📦 Dependencies installed"
 
     - name: Install FFmpeg
@@ -84,105 +79,101 @@ jobs:
         RUNWAY_PROMPT: ${{ github.event.client_payload.runway_prompt }}
         SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
+        # Models known to support video-to-video: gen4_aleph (recommended) or gen3a_turbo
+        RUNWAY_MODEL: gen4_aleph
+        # Valid ratios (portrait): 720:1280 for gen4_aleph, 768:1280 for gen3a_turbo
+        RUNWAY_RATIO: 720:1280
+        RUNWAY_DURATION: "10"
       run: |
+        set -euo pipefail
         echo "🎬 Generating video with RunwayML..."
-        echo "📝 Prompt: $RUNWAY_PROMPT"
-        echo "💃 Dance: $SELECTED_DANCE"
-        
-        cat > runway_generator_fixed.py << 'EOF'
-        import requests
-        import json
-        import os
-        import time
-        import base64
+        echo "📝 Prompt: ${RUNWAY_PROMPT}"
+        echo "💃 Dance: ${SELECTED_DANCE}"
 
-        def generate_video():
-            api_key = os.environ.get('RUNWAYML_API_KEY')
-            prompt = os.environ.get('RUNWAY_PROMPT', '')
-            
-            if not api_key:
-                print("❌ RunwayML API key not found")
-                return False
-                
-            if not prompt:
-                print("❌ Runway prompt not found")
-                return False
-                
-            print(f"🎯 Using prompt: {prompt[:100]}...")
-            
-            if not os.path.exists("reference_video.mp4"):
-                print("❌ Reference video not found")
-                return False
-                
-            with open("reference_video.mp4", "rb") as f:
-                video_data = f.read()
-                
-            print(f"📹 Reference video size: {len(video_data)} bytes")
-            
-            # Convert to base64
-            video_b64 = base64.b64encode(video_data).decode('utf-8')
-            
-            headers = {
-                'Authorization': f'Bearer {api_key}',
-                'Content-Type': 'application/json',
-                'X-Runway-Version': '2024-11-06'
-            }
-            
-            # Simple direct payload - no upload step needed
-            payload = {
-                "promptText": prompt,
-                "promptVideo": f"data:video/mp4;base64,{video_b64}",
-                "model": "gen3a",
-                "aspectRatio": "9:16",
-                "duration": 10,
-                "watermark": False
-            }
-            
-            print("🚀 Sending direct request to RunwayML...")
-            
-            try:
-                response = requests.post(
-                    'https://api.dev.runwayml.com/v1/video_to_video',
-                    headers=headers,
-                    json=payload,
-                    timeout=120
-                )
-                
-                print(f"📡 Response status: {response.status_code}")
-                
-                if response.status_code in [200, 201, 202]:
-                    result = response.json()
-                    print(f"✅ RunwayML generation started!")
-                    print(f"Task ID: {result.get('id', 'N/A')}")
-                    
-                    with open('runway_task.json', 'w') as f:
-                        json.dump(result, f, indent=2)
-                    
-                    # Create a simple final video file to satisfy the workflow
-                    with open("final_animation.mp4", "wb") as f:
-                        f.write(video_data)  # Use reference as placeholder
-                    
-                    print("✅ Task file saved, placeholder video created")
-                    return True
-                else:
-                    print(f"❌ RunwayML API error: {response.status_code}")
-                    print(f"Response: {response.text}")
-                    return False
-                    
-            except Exception as e:
-                print(f"❌ Request failed: {e}")
-                return False
+        python - << 'PY'
+        import os, time, json, base64, requests, sys
 
-        if __name__ == "__main__":
-            success = generate_video()
-            if success:
-                print("✅ Video generation initiated successfully")
-            else:
-                print("❌ Video generation failed")
-                exit(1)
-        EOF
-        
-        python runway_generator_fixed.py
+        API_KEY   = os.environ['RUNWAYML_API_KEY']
+        PROMPT    = os.environ.get('RUNWAY_PROMPT', '')
+        MODEL     = os.environ.get('RUNWAY_MODEL', 'gen4_aleph')
+        RATIO     = os.environ.get('RUNWAY_RATIO', '720:1280')
+        DURATION  = int(os.environ.get('RUNWAY_DURATION', '10'))
+
+        if not API_KEY:
+            print("❌ RUNWAYML_API_KEY missing"); sys.exit(1)
+        if not PROMPT:
+            print("❌ RUNWAY_PROMPT missing"); sys.exit(1)
+        if not os.path.exists("reference_video.mp4"):
+            print("❌ reference_video.mp4 missing"); sys.exit(1)
+
+        # Build data URI (keeps us clear of URL header/redirect rules)
+        with open("reference_video.mp4", "rb") as f:
+            b64 = base64.b64encode(f.read()).decode("utf-8")
+        video_uri = f"data:video/mp4;base64,{b64}"
+
+        headers = {
+            "Authorization": f"Bearer {API_KEY}",
+            "Content-Type": "application/json",
+            "X-Runway-Version": "2024-11-06",
+        }
+        payload = {
+            "model": MODEL,            # e.g., "gen4_aleph" or "gen3a_turbo"
+            "promptText": PROMPT,
+            "videoUri": video_uri,     # correct field for video-to-video
+            "ratio": RATIO,            # e.g., "720:1280"
+            "duration": DURATION,      # seconds
+        }
+
+        print("🚀 POST /v1/video_to_video")
+        r = requests.post("https://api.runwayml.com/v1/video_to_video",
+                          headers=headers, json=payload, timeout=180)
+        print(f"📡 Status: {r.status_code}")
+        if r.status_code not in (200, 201, 202):
+            print("❌ API error:", r.text[:800]); sys.exit(1)
+
+        task = r.json()
+        with open('runway_task.json', 'w') as f:
+            json.dump(task, f, indent=2)
+
+        task_id = task.get("id")
+        if not task_id:
+            print("❌ No task id in response:", task); sys.exit(1)
+        print("🆔 Task:", task_id)
+
+        # Poll for completion
+        start = time.time()
+        while True:
+            tr = requests.get(f"https://api.runwayml.com/v1/tasks/{task_id}",
+                              headers=headers, timeout=60)
+            if tr.status_code != 200:
+                print("⚠️ Poll error:", tr.status_code, tr.text[:200])
+                time.sleep(5); continue
+            tj = tr.json()
+            status = tj.get("status")
+            prog = tj.get("progress", 0)
+            print(f"🔄 {status} {prog}%")
+
+            if status == "SUCCEEDED":
+                outs = tj.get("output") or []
+                if not outs:
+                    print("❌ No output URLs in task"); sys.exit(1)
+                url = outs[0]
+                print("✅ Completed. Downloading:", url[:120], "...")
+                vid = requests.get(url, timeout=300)
+                if vid.status_code != 200:
+                    print("❌ Download failed:", vid.status_code, vid.text[:200]); sys.exit(1)
+                with open("final_animation.mp4", "wb") as f:
+                    f.write(vid.content)
+                print("💾 Saved final_animation.mp4")
+                break
+
+            if status == "FAILED":
+                print("❌ Task failed:", json.dumps(tj)[:800]); sys.exit(1)
+
+            if time.time() - start > 900:  # 15 minutes timeout
+                print("❌ Timed out"); sys.exit(1)
+            time.sleep(5)
+        PY
 
     - name: Create fallback video
       if: failure()
@@ -202,21 +193,18 @@ jobs:
       env:
         SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
       run: |
+        set -euo pipefail
         echo "🎬 Processing final video..."
-        
-        # Check for generated video
         if [ ! -f "final_animation.mp4" ]; then
           echo "❌ No video file found"
           ls -la *.mp4 2>/dev/null || echo "No MP4 files found"
           exit 1
         fi
-        
-        # Add simple text overlay
-        ffmpeg -i final_animation.mp4 \
-          -vf "drawtext=text='Deuce does the $SELECTED_DANCE!':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=h-120:box=1:boxcolor=black@0.8:boxborderw=6" \
+        # Add a simple text overlay for the dance label
+        ffmpeg -y -i final_animation.mp4 \
+          -vf "drawtext=text='Deuce does the ${SELECTED_DANCE}!':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=h-120:box=1:boxcolor=black@0.8:boxborderw=6" \
           -c:v libx264 -c:a copy \
           tiktok_masterpiece.mp4
-          
         if [ -f "tiktok_masterpiece.mp4" ]; then
           echo "✅ Final video processed successfully!"
           ls -la tiktok_masterpiece.mp4
@@ -240,13 +228,12 @@ jobs:
       run: |
         echo "## 🕺 Deuce Dance Video Generated! ✨" >> $GITHUB_STEP_SUMMARY
         echo "" >> $GITHUB_STEP_SUMMARY
-        
         if [ -f "tiktok_masterpiece.mp4" ]; then
           VIDEO_SIZE=$(du -h tiktok_masterpiece.mp4 | cut -f1)
           echo "- 🎥 **Video:** tiktok_masterpiece.mp4 ($VIDEO_SIZE)" >> $GITHUB_STEP_SUMMARY
           echo "- 💃 **Dance:** ${{ github.event.client_payload.selected_dance }}" >> $GITHUB_STEP_SUMMARY
-          echo "- 📱 **Format:** 1080x1920 (9:16)" >> $GITHUB_STEP_SUMMARY
-          echo "- ⏱️ **Duration:** 10 seconds" >> $GITHUB_STEP_SUMMARY
+          echo "- 📱 **Format:** Portrait (ratio ${{ env.RUNWAY_RATIO }})" >> $GITHUB_STEP_SUMMARY
+          echo "- ⏱️ **Duration:** ${{ env.RUNWAY_DURATION }} seconds" >> $GITHUB_STEP_SUMMARY
           echo "- 🎬 **Status:** Ready for upload!" >> $GITHUB_STEP_SUMMARY
         else
           echo "- ❌ **Status:** Video generation failed" >> $GITHUB_STEP_SUMMARY

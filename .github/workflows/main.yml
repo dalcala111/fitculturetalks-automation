@@ -82,7 +82,7 @@ jobs:
         # Choose a model/ratio the dev API supports:
         # - gen4_turbo  -> portrait ratio 720:1280
         # - gen3a_turbo -> portrait ratio 768:1280
-        RUNWAY_MODEL: gen3a_turbo
+        RUNWAY_MODEL: gen4_aleph
         RUNWAY_RATIO: 720:1280
         RUNWAY_DURATION: "10"
       run: |

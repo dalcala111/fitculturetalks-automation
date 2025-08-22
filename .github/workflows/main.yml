@@ -79,23 +79,25 @@ jobs:
         RUNWAY_PROMPT: ${{ github.event.client_payload.runway_prompt }}
         SELECTED_DANCE: ${{ github.event.client_payload.selected_dance }}
         RUNWAYML_API_KEY: ${{ secrets.RUNWAYML_API_KEY }}
-        # Models known to support video-to-video: gen4_aleph (recommended) or gen3a_turbo
-        RUNWAY_MODEL: gen4_aleph
-        # Valid ratios (portrait): 720:1280 for gen4_aleph, 768:1280 for gen3a_turbo
+        # Choose a model/ratio the dev API supports:
+        # - gen4_turbo  -> portrait ratio 720:1280
+        # - gen3a_turbo -> portrait ratio 768:1280
+        RUNWAY_MODEL: gen4_turbo
         RUNWAY_RATIO: 720:1280
         RUNWAY_DURATION: "10"
       run: |
         set -euo pipefail
-        echo "🎬 Generating video with RunwayML..."
+        echo "🎬 Generating video with RunwayML (dev API)..."
         echo "📝 Prompt: ${RUNWAY_PROMPT}"
         echo "💃 Dance: ${SELECTED_DANCE}"
+        echo "🌐 API: https://api.dev.runwayml.com"
 
         python - << 'PY'
         import os, time, json, base64, requests, sys
 
         API_KEY   = os.environ['RUNWAYML_API_KEY']
         PROMPT    = os.environ.get('RUNWAY_PROMPT', '')
-        MODEL     = os.environ.get('RUNWAY_MODEL', 'gen4_aleph')
+        MODEL     = os.environ.get('RUNWAY_MODEL', 'gen4_turbo')
         RATIO     = os.environ.get('RUNWAY_RATIO', '720:1280')
         DURATION  = int(os.environ.get('RUNWAY_DURATION', '10'))
 
@@ -106,7 +108,7 @@ jobs:
         if not os.path.exists("reference_video.mp4"):
             print("❌ reference_video.mp4 missing"); sys.exit(1)
 
-        # Build data URI (keeps us clear of URL header/redirect rules)
+        # Build data URI from the downloaded MP4
         with open("reference_video.mp4", "rb") as f:
             b64 = base64.b64encode(f.read()).decode("utf-8")
         video_uri = f"data:video/mp4;base64,{b64}"
@@ -117,15 +119,15 @@ jobs:
             "X-Runway-Version": "2024-11-06",
         }
         payload = {
-            "model": MODEL,            # e.g., "gen4_aleph" or "gen3a_turbo"
+            "model": MODEL,            # gen4_turbo or gen3a_turbo (see docs)
             "promptText": PROMPT,
-            "videoUri": video_uri,     # correct field for video-to-video
-            "ratio": RATIO,            # e.g., "720:1280"
+            "videoUri": video_uri,     # data-URI avoids remote URL header/redirect issues
+            "ratio": RATIO,            # 720:1280 for gen4_turbo; 768:1280 for gen3a_turbo
             "duration": DURATION,      # seconds
         }
 
-        print("🚀 POST /v1/video_to_video")
-        r = requests.post("https://api.runwayml.com/v1/video_to_video",
+        print("🚀 POST https://api.dev.runwayml.com/v1/video_to_video")
+        r = requests.post("https://api.dev.runwayml.com/v1/video_to_video",
                           headers=headers, json=payload, timeout=180)
         print(f"📡 Status: {r.status_code}")
         if r.status_code not in (200, 201, 202):
@@ -143,7 +145,7 @@ jobs:
         # Poll for completion
         start = time.time()
         while True:
-            tr = requests.get(f"https://api.runwayml.com/v1/tasks/{task_id}",
+            tr = requests.get(f"https://api.dev.runwayml.com/v1/tasks/{task_id}",
                               headers=headers, timeout=60)
             if tr.status_code != 200:
                 print("⚠️ Poll error:", tr.status_code, tr.text[:200])
@@ -200,7 +202,6 @@ jobs:
           ls -la *.mp4 2>/dev/null || echo "No MP4 files found"
           exit 1
         fi
-        # Add a simple text overlay for the dance label
         ffmpeg -y -i final_animation.mp4 \
           -vf "drawtext=text='Deuce does the ${SELECTED_DANCE}!':fontsize=48:fontcolor=white:x=(w-text_w)/2:y=h-120:box=1:boxcolor=black@0.8:boxborderw=6" \
           -c:v libx264 -c:a copy \
